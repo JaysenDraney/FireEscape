@@ -1,0 +1,6 @@
+# Developer toolchain. Run `mise install` in this folder.
+# Gradle here only bootstraps the Gradle wrapper; the wrapper pins the real version.
+[tools]
+java = "temurin-17"
+gradle = "8.14.8"
+android-sdk = "latest"

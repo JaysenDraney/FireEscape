@@ -10,4 +10,8 @@ An open source TV launcher for Android TV and Google TV, built around a plugin s
 
 ## Open decisions
 
-The core license, the plugin form and the other open questions are listed in section 6 of the proposal. No license has been chosen yet. Until one is added, the default copyright applies and the text is not licensed for reuse.
+The plugin form and the other open questions are listed in section 6 of the proposal.
+
+## License
+
+Apache License 2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE).

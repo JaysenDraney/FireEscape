@@ -1,0 +1,37 @@
+---
+title: Wallpaper providers
+description: Class 2. Supplies background images or video behind the home screen.
+---
+
+import { Badge } from '@astrojs/starlight/components';
+
+<Badge text="Tier 1 · Presentation" variant="success" /> <Badge text="Phase 1" variant="note" />
+
+Supplies background images or video behind the home screen.
+
+## Contract
+
+| | |
+| --- | --- |
+| **Launcher sends** | Screen size and idle or active state. Optionally the focused tile's package name, off unless the user grants "focus context". |
+| **Plugin returns** | An ordered list of media items: image or video source (URL or file), title, credit, display duration. |
+| **Updates** | On a timer, on focus change, or on idle change, as the plugin declares. |
+| **Cannot** | See the app list, start anything, or draw outside the background layer. |
+
+## What it touches
+
+The background layer. It leaves rows, header, focus and anything selectable alone.
+
+## Examples
+
+- Apple Aerials video list
+- Public-domain museum art
+- A local photo folder
+- An album from a home server
+- Now-playing artwork
+- Generated gradients
+
+## Notes
+
+- The launcher plays video itself. Plugins return sources, not decoders.
+- A plugin that accepts a user-supplied list of images or videos (JSON or M3U) is a good fit for this class, because it lets people bring their own media.

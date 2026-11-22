@@ -1,0 +1,54 @@
+/* Look A: Ember. Warm near-black with an amber accent. Matches the name and the tier-2 amber used in the design diagrams. */
+:root {
+	--sl-color-white: #fff6ec;
+	--sl-color-gray-1: #efe4d8;
+	--sl-color-gray-2: #cdbfb1;
+	--sl-color-gray-3: #a89a8c;
+	--sl-color-gray-4: #6b5e53;
+	--sl-color-gray-5: #3a312a;
+	--sl-color-gray-6: #231d18;
+	--sl-color-black: #15110e;
+	--sl-color-accent-low: #3d2108;
+	--sl-color-accent: #e8851a;
+	--sl-color-accent-high: #ffc27a;
+	--fe-radius: 12px;
+}
+
+:root[data-theme='light'] {
+	--sl-color-white: #1f1610;
+	--sl-color-gray-1: #2e231b;
+	--sl-color-gray-2: #4a3c30;
+	--sl-color-gray-3: #6e5d4f;
+	--sl-color-gray-4: #9b8a7a;
+	--sl-color-gray-5: #d9cdc0;
+	--sl-color-gray-6: #efe6db;
+	--sl-color-gray-7: #f7f1e9;
+	--sl-color-black: #fffaf3;
+	--sl-color-accent-low: #ffe2c0;
+	--sl-color-accent: #ad5200;
+	--sl-color-accent-high: #7a3a00;
+}
+
+/* A soft ember glow behind the landing hero */
+.hero {
+	background: radial-gradient(ellipse 70% 80% at 50% 0%, rgba(232, 133, 26, 0.2), transparent 70%);
+	border-radius: 0 0 var(--fe-radius) var(--fe-radius);
+}
+:root[data-theme='light'] .hero {
+	background: radial-gradient(ellipse 70% 80% at 50% 0%, rgba(184, 90, 0, 0.14), transparent 70%);
+}
+
+.card,
+.sl-link-card {
+	border: 1px solid var(--sl-color-gray-5);
+	transition: border-color 0.15s ease;
+}
+.card:hover,
+.sl-link-card:hover {
+	border-color: var(--sl-color-accent);
+}
+
+.sl-markdown-content h2 {
+	border-bottom: 1px solid var(--sl-color-gray-5);
+	padding-bottom: 0.35rem;
+}

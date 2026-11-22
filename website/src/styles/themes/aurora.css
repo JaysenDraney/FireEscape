@@ -1,0 +1,72 @@
+/* Look C: Aurora. Deep navy with a violet gradient, translucent cards, gradient hero text.
+   Inspired by the structure of product sites that lead with a bold statement, then card grids. */
+:root {
+	--sl-color-white: #f4f3ff;
+	--sl-color-gray-1: #e4e2fb;
+	--sl-color-gray-2: #c1bfe0;
+	--sl-color-gray-3: #9b99c4;
+	--sl-color-gray-4: #5a5882;
+	--sl-color-gray-5: #2b2a4a;
+	--sl-color-gray-6: #161632;
+	--sl-color-black: #0c0b1e;
+	--sl-color-accent-low: #26215f;
+	--sl-color-accent: #8b7bff;
+	--sl-color-accent-high: #cfc8ff;
+	--fe-radius: 14px;
+}
+
+:root[data-theme='light'] {
+	--sl-color-white: #1b1740;
+	--sl-color-gray-1: #2a2560;
+	--sl-color-gray-2: #46408a;
+	--sl-color-gray-3: #655fa8;
+	--sl-color-gray-4: #a29fd3;
+	--sl-color-gray-5: #dcdaf3;
+	--sl-color-gray-6: #ecebfa;
+	--sl-color-gray-7: #f5f4fd;
+	--sl-color-black: #ffffff;
+	--sl-color-accent-low: #e3dfff;
+	--sl-color-accent: #5b45e0;
+	--sl-color-accent-high: #3b2ab0;
+}
+
+/* Background glow */
+body {
+	background-image:
+		radial-gradient(ellipse 60% 40% at 15% -5%, rgba(139, 123, 255, 0.22), transparent 70%),
+		radial-gradient(ellipse 50% 35% at 90% 0%, rgba(56, 189, 248, 0.14), transparent 70%);
+	background-repeat: no-repeat;
+}
+:root[data-theme='light'] body {
+	background-image:
+		radial-gradient(ellipse 60% 40% at 15% -5%, rgba(91, 69, 224, 0.12), transparent 70%),
+		radial-gradient(ellipse 50% 35% at 90% 0%, rgba(56, 189, 248, 0.1), transparent 70%);
+}
+
+/* Gradient hero title */
+.hero h1 {
+	background: linear-gradient(90deg, #cfc8ff, #8b7bff 50%, #5bc8f5);
+	-webkit-background-clip: text;
+	background-clip: text;
+	-webkit-text-fill-color: transparent;
+	color: transparent;
+}
+:root[data-theme='light'] .hero h1 {
+	background: linear-gradient(90deg, #3b2ab0, #5b45e0 50%, #0e7aa8);
+	-webkit-background-clip: text;
+	background-clip: text;
+}
+
+/* Glassy cards */
+.card,
+.sl-link-card {
+	background: color-mix(in srgb, var(--sl-color-gray-6) 70%, transparent);
+	border: 1px solid color-mix(in srgb, var(--sl-color-accent) 28%, transparent);
+	backdrop-filter: blur(8px);
+	transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.card:hover,
+.sl-link-card:hover {
+	border-color: var(--sl-color-accent);
+	transform: translateY(-2px);
+}

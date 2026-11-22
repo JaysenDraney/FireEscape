@@ -1,0 +1,33 @@
+---
+title: Plugin classes
+description: The eleven plugin classes, the trust tier of each, and how every class page is laid out.
+---
+
+import { Badge } from '@astrojs/starlight/components';
+
+Each class has a written contract: what the launcher sends, what the plugin returns, and what it cannot do.
+
+| # | Class | What it supplies | Tier | Phase |
+| --- | --- | --- | --- | --- |
+| 1 | Theme and layout | Colors, type, icon sets, row and grid arrangements. Data only. | <Badge text="0" variant="note" /> | 1 |
+| 2 | [Wallpaper providers](/plugins/wallpaper-providers/) | Background images and video | <Badge text="1" variant="success" /> | 1 |
+| 3 | Widgets | Small live info in header slots | <Badge text="1" variant="success" /> | 2 |
+| 4 | Idle providers | Full-screen content while the TV is idle | <Badge text="1" variant="success" /> | 2 |
+| 5 | Content rows | Rows of cards that open something when selected | <Badge text="2" variant="caution" /> | 2 |
+| 6 | Launch sources | Things that can be opened: apps, inputs, links, hosts | <Badge text="2" variant="caution" /> | 1 |
+| 7 | Catalog providers | Titles and metadata for browsing and search | <Badge text="2" variant="caution" /> | 2 |
+| 8 | Availability resolvers | Where a title can be watched and how to open it | <Badge text="2" variant="caution" /> | 2 |
+| 9 | [Recommendation providers](/plugins/recommendation-providers/) | Ranked proposals with a reason and a confidence | <Badge text="2" variant="caution" /> | 2 local, 3 external |
+| 10 | Automation | Event-triggered actions | <Badge text="3" variant="danger" /> | 3 |
+| 11 | Profiles and policy | Per-profile visibility, PINs, schedules | <Badge text="3" variant="danger" /> | 3 |
+
+Pages for the remaining classes are being written. The full contracts are in the [design proposal](/design/plugin-system-proposal.html).
+
+## How every class page is laid out
+
+Every class page uses the same template, so a plugin author can find the same thing in the same place.
+
+1. **Purpose.** One sentence.
+2. **Contract.** What the launcher sends, what the plugin returns, when it updates, and what it cannot do.
+3. **Examples.** Real plugins this class could hold.
+4. **Limits and notes.** Anything a plugin author or user should not be surprised by.

@@ -1,0 +1,67 @@
+/* Look B: Terminal. Minimal and high contrast, monospace for headings and navigation, sharp corners.
+   Inspired by the structure of minimal developer sites: blunt headline, no decoration. */
+:root {
+	--sl-color-white: #f5f5f5;
+	--sl-color-gray-1: #e5e5e5;
+	--sl-color-gray-2: #bdbdbd;
+	--sl-color-gray-3: #9a9a9a;
+	--sl-color-gray-4: #5f5f5f;
+	--sl-color-gray-5: #2f2f2f;
+	--sl-color-gray-6: #161616;
+	--sl-color-black: #0a0a0a;
+	--sl-color-accent-low: #07240f;
+	--sl-color-accent: #3ddc84;
+	--sl-color-accent-high: #8ff0b4;
+	--fe-radius: 0px;
+}
+
+:root[data-theme='light'] {
+	--sl-color-white: #111111;
+	--sl-color-gray-1: #1f1f1f;
+	--sl-color-gray-2: #3a3a3a;
+	--sl-color-gray-3: #5e5e5e;
+	--sl-color-gray-4: #9a9a9a;
+	--sl-color-gray-5: #dcdcdc;
+	--sl-color-gray-6: #eeeeee;
+	--sl-color-gray-7: #f6f6f6;
+	--sl-color-black: #ffffff;
+	--sl-color-accent-low: #d6f5e1;
+	--sl-color-accent: #0f7a3e;
+	--sl-color-accent-high: #0a5229;
+}
+
+/* Monospace for structure, the system sans for long reading */
+.sl-markdown-content :is(h1, h2, h3, h4),
+.site-title,
+.sidebar-content summary,
+.sidebar-content .large,
+.hero h1,
+.hero .tagline,
+.sl-link-button {
+	font-family: var(--sl-font-system-mono);
+}
+
+.hero .tagline::before {
+	content: '$ ';
+	color: var(--sl-color-accent);
+}
+
+.card,
+.sl-link-card,
+.sl-link-button,
+.sl-markdown-content code,
+.sl-markdown-content pre {
+	border-radius: 0;
+}
+.card,
+.sl-link-card {
+	border: 1px solid var(--sl-color-gray-4);
+}
+.card:hover,
+.sl-link-card:hover {
+	border-color: var(--sl-color-accent);
+}
+
+.sl-markdown-content a {
+	text-underline-offset: 0.2em;
+}

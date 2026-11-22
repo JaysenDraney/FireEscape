@@ -1,0 +1,51 @@
+/* Shared structure for every FireEscape look. Colors and character live in themes/*.css. */
+:root {
+	--fe-radius: 10px;
+	--sl-content-width: 50rem;
+}
+
+.sl-markdown-content table {
+	width: 100%;
+}
+
+.sl-markdown-content :is(h2, h3, h4) {
+	letter-spacing: -0.01em;
+}
+
+/* Landing page hero: generous space. The tagline is allowed to run on one line. */
+.hero {
+	padding-block: clamp(2.5rem, 8vw, 5.5rem);
+}
+.hero .tagline {
+	max-width: none;
+}
+
+/* The stacked wordmark is only shown by looks that style it */
+.hero-html {
+	display: none;
+}
+
+/* The sentence under the hero that says what the project is for */
+.fe-lede {
+	font-size: var(--sl-text-lg);
+	max-width: 46rem;
+	margin-inline: auto;
+	text-align: center;
+	color: var(--sl-color-gray-2);
+}
+
+/* Cards and link cards */
+.card,
+.sl-link-card {
+	border-radius: var(--fe-radius);
+}
+
+/* Compact install-style blocks */
+.sl-markdown-content pre {
+	border-radius: var(--fe-radius);
+}
+
+/* Tier badges in tables stay on one line */
+.sl-markdown-content td .sl-badge {
+	white-space: nowrap;
+}

@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FireEscape: Plugin System Proposal</title>
+<style>
+  :root{
+    color-scheme:dark; --bg:#0f1318; --ink:#e8ecf1; --muted:#9aa5b1; --line:#2a323c; --card:#171d24;
+    --zone:#27303a; --zone-bg:#323d49;
+    --t0:#7f93ba; --t1:#2aa3a5; --t2:#d08a1e; --t3:#e5586c;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  a{color:#7db3ff}
+  .wrap{max-width:1180px;margin:0 auto;padding:32px 24px 80px;display:grid;grid-template-columns:200px 1fr;gap:40px}
+  nav{position:sticky;top:24px;align-self:start;font-size:14px}
+  nav .label{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  nav ol{list-style:none;margin:0;padding:0}
+  nav li{margin:0}
+  nav a{display:block;padding:5px 10px;border-left:2px solid var(--line);color:var(--muted);text-decoration:none}
+  nav a:hover{color:var(--ink);border-left-color:var(--ink)}
+  nav .sub{padding-left:10px}
+  main{min-width:0}
+  h1{font-size:34px;line-height:1.15;margin:0 0 6px}
+  .sub-title{color:var(--muted);margin:0 0 28px}
+  h2{font-size:24px;margin:56px 0 6px;padding-top:16px;border-top:2px solid var(--ink)}
+  h2 .n{color:var(--muted);font-weight:500;margin-right:8px}
+  h3{font-size:18px;margin:28px 0 6px}
+  p{margin:8px 0}
+  .lede{color:var(--muted);margin-top:0}
+  .glance{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:0 0 8px}
+  .glance div{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+  .glance b{display:block;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+  table{border-collapse:collapse;width:100%;background:var(--card);border:1px solid var(--line);font-size:14.5px}
+  th,td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--line)}
+  th{background:#1d242c;font-weight:600;font-size:13px}
+  td.c,th.c{text-align:center}
+  .tier{display:inline-block;color:#0f1318;font-size:12px;font-weight:600;padding:1px 8px;border-radius:10px;white-space:nowrap}
+  .tier.t0{background:var(--t0)} .tier.t1{background:var(--t1)} .tier.t2{background:var(--t2)} .tier.t3{background:var(--t3)}
+  .t0{--accent:var(--t0)} .t1{--accent:var(--t1)} .t2{--accent:var(--t2)} .t3{--accent:var(--t3)}
+
+  /* class cards */
+  .card{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--accent);border-radius:8px;padding:18px 20px;margin:18px 0}
+  .card header{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin-bottom:2px}
+  .card h3{margin:0;font-size:20px}
+  .card .num{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--ink);color:var(--bg);font-size:14px;font-weight:700}
+  .card .purpose{margin:2px 0 12px;font-size:17px}
+  .cols{display:grid;grid-template-columns:1fr 340px;gap:22px;align-items:start}
+  dl{margin:0;display:grid;grid-template-columns:110px 1fr;gap:6px 12px;font-size:14.5px}
+  dt{color:var(--muted);font-weight:600}
+  dd{margin:0}
+  .fig{margin:0}
+  .fig figcaption{font-size:13.5px;color:var(--muted);margin-top:6px}
+  .fig figcaption b{color:var(--ink)}
+  svg.mini{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+  .examples{margin:12px 0 0;font-size:14.5px}
+  .examples b{color:var(--muted)}
+  .note{background:#2a2416;border:1px solid #5c4a1c;border-radius:8px;padding:10px 14px;margin:12px 0;font-size:14.5px}
+
+  /* diagram variables: zones read these, classes below set them */
+  .z{stroke:var(--st,#3d4957);stroke-width:var(--sw,.75);stroke-dasharray:var(--dash,none)}
+  .hl-bg{--f-bg:var(--accent)}
+  .hl-widgets{--f-w:var(--accent)}
+  .hl-content{--f-c:var(--accent)}
+  .hl-apps{--f-a:var(--accent)}
+  .hl-theme{--st:var(--accent);--sw:1.6;--dash:3 2}
+  .hl-idle{--idle-op:1}
+  .hl-auto{--auto-op:1}
+  .hl-policy{--policy-op:1;--lock:.28}
+  .hl-p1{--p1:var(--accent);--p1t:#0f1318}
+  .hl-p2{--p2:var(--accent);--p2t:#0f1318}
+  .hl-p3{--p3:var(--accent);--p3t:#0f1318}
+  .hl-pall{--p1:var(--accent);--p1t:#0f1318;--p2:var(--accent);--p2t:#0f1318;--p3:var(--accent);--p3t:#0f1318}
+  .master{--f-bg:var(--t1);--f-w:#8fd0d0;--f-c:var(--t2);--f-a:var(--t2);--auto-op:1;--policy-op:1;--lock:.4;--accent:var(--t3)}
+  .master-idle{--idle-op:1;--accent:var(--t1)}
+  .pin circle{fill:var(--ink);stroke:var(--bg);stroke-width:1.5}
+  .pin text{fill:#0f1318;font:700 10px system-ui,sans-serif;text-anchor:middle}
+
+  .ladder text{font:13px system-ui,sans-serif}
+  .legend{font-size:13.5px;color:var(--muted);margin:6px 0 0}
+  .tiers{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0}
+  .tiers div{background:var(--card);border:1px solid var(--line);border-top:4px solid var(--accent);border-radius:6px;padding:10px 12px;font-size:14px}
+  .tiers b{display:block;margin-bottom:2px}
+  code,pre{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:13px}
+  pre{background:#0a0d11;color:#e6edf3;border:1px solid var(--line);padding:12px 14px;border-radius:8px;overflow:auto}
+  ul{margin:6px 0;padding-left:22px}
+  li{margin:3px 0}
+  .appendix h2{border-top-color:var(--muted)}
+  footer{margin-top:60px;color:var(--muted);font-size:13px}
+
+  @media (max-width:1000px){
+    .wrap{grid-template-columns:1fr}
+    nav{position:static} table{display:block;overflow-x:auto}
+    .cols{grid-template-columns:1fr} .cols .fig{max-width:460px}
+    .glance,.tiers{grid-template-columns:1fr 1fr}
+  }
+  @media print{ nav{display:none} .wrap{display:block} .card{break-inside:avoid} }
+</style>
+</head>
+<body>
+
+<!-- shared mini home-screen used by every diagram. Zones read CSS variables set by the .hl-* classes. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="screen" viewBox="0 0 320 180">
+    <rect class="z" x="0" y="0" width="320" height="180" rx="8" style="fill:var(--f-bg,var(--zone-bg))"/>
+    <!-- header widget slots -->
+    <rect class="z" x="12" y="12" width="70" height="18" rx="4" style="fill:var(--f-w,var(--zone))"/>
+    <rect class="z" x="226" y="12" width="82" height="18" rx="4" style="fill:var(--f-w,var(--zone))"/>
+    <!-- content row -->
+    <rect class="z" x="12"  y="48" width="68" height="50" rx="5" style="fill:var(--f-c,var(--zone))"/>
+    <rect class="z" x="88"  y="48" width="68" height="50" rx="5" style="fill:var(--f-c,var(--zone))"/>
+    <rect class="z" x="164" y="48" width="68" height="50" rx="5" style="fill:var(--f-c,var(--zone))"/>
+    <rect class="z" x="240" y="48" width="68" height="50" rx="5" style="fill:var(--f-c,var(--zone))"/>
+    <!-- app row -->
+    <rect class="z" x="12"    y="112" width="40" height="34" rx="5" style="fill:var(--f-a,var(--zone))"/>
+    <rect class="z" x="63.2"  y="112" width="40" height="34" rx="5" style="fill:var(--f-a,var(--zone))"/>
+    <rect class="z" x="114.4" y="112" width="40" height="34" rx="5" style="fill:var(--f-a,var(--zone))"/>
+    <rect class="z" x="165.6" y="112" width="40" height="34" rx="5" style="fill:var(--f-a,var(--zone));opacity:var(--lock,1)"/>
+    <rect class="z" x="216.8" y="112" width="40" height="34" rx="5" style="fill:var(--f-a,var(--zone));opacity:var(--lock,1)"/>
+    <rect class="z" x="268"   y="112" width="40" height="34" rx="5" style="fill:var(--f-a,var(--zone));opacity:var(--lock,1)"/>
+    <!-- policy badge: lock on a hidden tile -->
+    <g style="opacity:var(--policy-op,0)">
+      <circle cx="288" cy="129" r="10" fill="#e5586c"/>
+      <rect x="283" y="129" width="10" height="7" rx="1.5" fill="#0f1318"/>
+      <path d="M285 129v-3a3 3 0 0 1 6 0v3" fill="none" stroke="#0f1318" stroke-width="1.6"/>
+    </g>
+    <!-- automation badge: trigger -> action, no screen surface of its own -->
+    <g style="opacity:var(--auto-op,0)">
+      <rect x="176" y="156" width="132" height="16" rx="8" fill="var(--accent,#e5586c)"/>
+      <text x="242" y="167.5" font-size="8.5" fill="#0f1318" text-anchor="middle" font-family="system-ui,sans-serif">on boot: open chosen app</text>
+    </g>
+    <!-- idle takeover -->
+    <g style="opacity:var(--idle-op,0)">
+      <rect x="0" y="0" width="320" height="180" rx="8" fill="#05070a" stroke="#3d4957"/>
+      <rect x="50" y="26" width="220" height="110" rx="3" fill="var(--accent,#2aa3a5)" opacity=".85"/>
+      <text x="16" y="168" font-size="12" fill="#fff" font-family="system-ui,sans-serif">10:42</text>
+    </g>
+  </symbol>
+  <symbol id="pipe" viewBox="0 0 320 180" font-family="system-ui,sans-serif">
+    <rect class="z" x="0" y="0" width="320" height="180" rx="8" style="fill:var(--zone-bg)"/>
+    <text x="40" y="32" font-size="9" text-anchor="middle" style="fill:var(--muted)">query or home row</text>
+    <path d="M40 38 V65" stroke="#9aa5b1" stroke-width="1" fill="none" marker-end="url(#arr)"/>
+
+    <rect class="z" x="8" y="68" width="64" height="44" rx="5" style="fill:var(--p1,var(--zone))"/>
+    <text x="40" y="87" font-size="9" font-weight="700" text-anchor="middle" style="fill:var(--p1t,var(--ink))">Catalogs</text>
+    <text x="40" y="101" font-size="8" text-anchor="middle" style="fill:var(--p1t,var(--muted))">titles + art</text>
+
+    <rect class="z" x="80" y="68" width="86" height="44" rx="5" style="fill:var(--p2,var(--zone))"/>
+    <text x="123" y="87" font-size="8.2" font-weight="700" text-anchor="middle" style="fill:var(--p2t,var(--ink))">Recommendations</text>
+    <text x="123" y="101" font-size="8" text-anchor="middle" style="fill:var(--p2t,var(--muted))">rank + explain</text>
+
+    <rect class="z" x="174" y="68" width="68" height="44" rx="5" style="fill:var(--p3,var(--zone))"/>
+    <text x="208" y="87" font-size="9" font-weight="700" text-anchor="middle" style="fill:var(--p3t,var(--ink))">Availability</text>
+    <text x="208" y="101" font-size="8" text-anchor="middle" style="fill:var(--p3t,var(--muted))">where to watch</text>
+
+    <rect class="z" x="250" y="68" width="62" height="44" rx="5" style="fill:var(--zone);stroke-dasharray:3 2"/>
+    <text x="281" y="87" font-size="9" font-weight="700" text-anchor="middle" style="fill:var(--ink)">Launcher</text>
+    <text x="281" y="101" font-size="8" text-anchor="middle" style="fill:var(--muted)">user selects</text>
+
+    <path d="M72 90 H79" stroke="#9aa5b1" stroke-width="1" fill="none" marker-end="url(#arr)"/>
+    <path d="M166 90 H173" stroke="#9aa5b1" stroke-width="1" fill="none" marker-end="url(#arr)"/>
+    <path d="M242 90 H249" stroke="#9aa5b1" stroke-width="1" fill="none" marker-end="url(#arr)"/>
+
+    <text x="160" y="140" font-size="9" text-anchor="middle" style="fill:var(--muted)">The launcher opens a target only after the user selects it</text>
+  </symbol>
+  <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0 0L10 5L0 10z" fill="#9aa5b1"/>
+  </marker>
+</svg>
+
+<div class="wrap">
+<nav aria-label="Sections">
+  <div class="label">Contents</div>
+  <ol>
+    <li><a href="#summary">Summary</a></li>
+    <li><a href="#tiers">Trust tiers</a></li>
+    <li><a href="#classes">1. Plugin classes</a></li>
+    <li><a href="#details">2. Class details</a></li>
+    <li><a href="#trust">3. Capabilities by class</a></li>
+    <li><a href="#ecosystem">4. Open ecosystem</a></li>
+    <li><a href="#phasing">5. Phasing and scope</a></li>
+    <li><a href="#decisions">6. Open decisions</a></li>
+    <li><a href="#tech">Appendix A: Technology</a></li>
+    <li><a href="#evidence">Appendix B: Evidence</a></li>
+  </ol>
+</nav>
+
+<main>
+<h1>FireEscape: Plugin System Proposal</h1>
+<p class="sub-title">Draft for discussion. Target platform: Android TV and Google TV.</p>
+
+<section id="summary">
+  <div class="glance">
+    <div><b>Idea</b>A small launcher core. Features arrive as plugins, including the ones shipped by default.</div>
+    <div><b>Plugin classes</b>11 classes, grouped into 4 trust tiers.</div>
+    <div><b>Openness rule</b>No capability is gated by payment or account. Spec, SDK and reference plugins are public.</div>
+    <div><b>First release</b>Core plus 3 classes: Theme and layout, Wallpaper, Launch sources.</div>
+  </div>
+  <p class="lede">The core handles focus, layout, settings, and hosting plugins. Everything the user sees or does beyond that comes from a plugin class with a written contract. Sections 1 to 3 define what plugins can do. Section 4 defines the rules that keep the ecosystem open. Technology is limited to Appendix A.</p>
+</section>
+
+<!-- ============ TRUST TIERS (front) ============ -->
+<h2 id="tiers"><span class="n">&#9675;</span>Trust tiers</h2>
+<p class="lede">Every plugin class belongs to one of four tiers. A tier answers one question: what is the worst a plugin in this class can do to the person using the TV? The colors in every diagram below follow the tier.</p>
+
+<table>
+  <thead>
+    <tr><th style="width:15%">Tier</th><th style="width:21%">In plain terms</th><th style="width:22%">What the user is asked</th><th style="width:27%">Worst case if a plugin is bad or buggy</th><th>Classes</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="tier t0">Tier 0</span><br>Declarative</td>
+      <td>A data file. No code runs.</td>
+      <td>Nothing beyond choosing it.</td>
+      <td>An ugly or unreadable screen. Switching packs fixes it.</td>
+      <td>1 Theme and layout</td>
+    </tr>
+    <tr>
+      <td><span class="tier t1">Tier 1</span><br>Presentation</td>
+      <td>Code runs and supplies visuals. It cannot start apps or restrict anyone.</td>
+      <td>The network use the plugin declares. It is shown, not enforced.</td>
+      <td>A wrong, broken or distracting picture or widget. It could contact servers you did not expect, which is why network use is shown at install.</td>
+      <td>2 Wallpaper<br>3 Widgets<br>4 Idle</td>
+    </tr>
+    <tr>
+      <td><span class="tier t2">Tier 2</span><br>Content and targets</td>
+      <td>Supplies things you can open or choose from. Opening anything still needs you to select it.</td>
+      <td>The network use the plugin declares (shown, not enforced). The installed-app list (launch sources). Your own API key for keyed services. For recommendation providers: a data level, and for providers that use an external service, trusting the publisher.</td>
+      <td>Misleading titles or links. A leak of your ratings or history if a provider with network access receives them. The data-level and trusted-publisher rules limit what is handed over. The launcher cannot see what a trusted publisher then does with it.</td>
+      <td>5 Content rows<br>6 Launch sources<br>7 Catalog providers<br>8 Availability resolvers<br>9 Recommendation providers</td>
+    </tr>
+    <tr>
+      <td><span class="tier t3">Tier 3</span><br>Control</td>
+      <td>Can act without you pressing anything, or limit what someone sees.</td>
+      <td>A separate approval for each plugin, with a plain-language warning. System-level grants where Android requires them.</td>
+      <td>Opening apps or switching profiles unexpectedly, hiding apps, locking people out. Every action is logged and listed in settings, so it can be traced and switched off.</td>
+      <td>10 Automation<br>11 Profiles and policy</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><b>Example.</b> A wallpaper plugin (Tier 1) can fetch images from the internet but cannot see which apps you have. An automation plugin (Tier 3) can open an app at boot, so you approve it on its own and every action it takes is logged.</p>
+
+<h3>How tiers are applied</h3>
+<ul>
+  <li>A tier belongs to the class, not to the individual plugin. A plugin cannot claim a lower tier than its class.</li>
+  <li>The install screen shows the tier first, then the specific permissions the plugin asks for.</li>
+  <li>Review for the default index gets stricter as the tier rises: a schema check for Tier 0, up to a source review for Tier 3.</li>
+  <li>The capability table in section 3 shows what each class can and cannot do.</li>
+</ul>
+
+<!-- ============ 1. CLASSES ============ -->
+<h2 id="classes"><span class="n">1</span>Plugin classes</h2>
+<p class="lede">Each number below is one class. Colors show trust tier (explained above): <span class="tier t0">Tier 0</span> <span class="tier t1">Tier 1</span> <span class="tier t2">Tier 2</span> <span class="tier t3">Tier 3</span></p>
+
+<figure class="fig">
+  <svg viewBox="0 0 700 212" class="mini master" role="img" aria-label="Home screen with each plugin class marked by number, and an idle screen beside it" style="border:none">
+    <use href="#screen" x="0" y="0" width="320" height="180"/>
+    <g class="master-idle"><use href="#screen" x="370" y="0" width="320" height="180" style="--f-bg:#323d49"/></g>
+    <text x="0" y="203" font-size="12" fill="#9aa5b1" font-family="system-ui,sans-serif">Active home screen</text>
+    <text x="370" y="203" font-size="12" fill="#9aa5b1" font-family="system-ui,sans-serif">Idle state</text>
+    <g class="pin" transform="translate(154,21)"><circle r="9"/><text y="4">1</text></g>
+    <g class="pin" transform="translate(16,166)"><circle r="9"/><text y="4">2</text></g>
+    <g class="pin" transform="translate(96,21)"><circle r="9"/><text y="4">3</text></g>
+    <g class="pin" transform="translate(530,86)"><circle r="9"/><text y="4">4</text></g>
+    <g class="pin" transform="translate(160,73)"><circle r="9"/><text y="4">5</text></g>
+    <g class="pin" transform="translate(160,129)"><circle r="9"/><text y="4">6</text></g>
+    <g class="pin" transform="translate(166,164)"><circle r="9"/><text y="4">10</text></g>
+    <g class="pin" transform="translate(262,129)"><circle r="9"/><text y="4">11</text></g>
+  </svg>
+  <figcaption>Where each class acts. Classes 7 to 9 (catalogs, availability, recommendation providers) feed rows and search results and have no screen area of their own; see the pipeline below. Class 10 (Automation) has no screen area either, so only a notice is shown. Class 11 (Profiles) changes what is visible or locked, shown here as dimmed tiles with a lock.</figcaption>
+</figure>
+
+<table>
+  <thead><tr><th>#</th><th>Class</th><th>What it supplies</th><th>Tier</th><th>Phase</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td><a href="#c-theme">Theme and layout</a></td><td>Colors, type, icon sets, row and grid arrangements. Data only.</td><td><span class="tier t0">0</span></td><td>1</td></tr>
+    <tr><td>2</td><td><a href="#c-wall">Wallpaper providers</a></td><td>Background images and video</td><td><span class="tier t1">1</span></td><td>1</td></tr>
+    <tr><td>3</td><td><a href="#c-widget">Widgets</a></td><td>Small live info in header slots</td><td><span class="tier t1">1</span></td><td>2</td></tr>
+    <tr><td>4</td><td><a href="#c-idle">Idle providers</a></td><td>Full-screen content while the TV is idle</td><td><span class="tier t1">1</span></td><td>2</td></tr>
+    <tr><td>5</td><td><a href="#c-content">Content rows</a></td><td>Rows of cards that open something when selected</td><td><span class="tier t2">2</span></td><td>2</td></tr>
+    <tr><td>6</td><td><a href="#c-launch">Launch sources</a></td><td>Things that can be opened: apps, inputs, links, hosts</td><td><span class="tier t2">2</span></td><td>1</td></tr>
+    <tr><td>7</td><td><a href="#c-catalog">Catalog providers</a></td><td>Titles and metadata for browsing and search</td><td><span class="tier t2">2</span></td><td>2</td></tr>
+    <tr><td>8</td><td><a href="#c-avail">Availability resolvers</a></td><td>Where a title can be watched and how to open it</td><td><span class="tier t2">2</span></td><td>2</td></tr>
+    <tr><td>9</td><td><a href="#c-recs">Recommendation providers</a></td><td>Ranked proposals with a reason and a confidence, from ratings and history</td><td><span class="tier t2">2</span></td><td>2 local, 3 external</td></tr>
+    <tr><td>10</td><td><a href="#c-auto">Automation</a></td><td>Event-triggered actions</td><td><span class="tier t3">3</span></td><td>3</td></tr>
+    <tr><td>11</td><td><a href="#c-policy">Profiles and policy</a></td><td>Per-profile visibility, PINs, schedules</td><td><span class="tier t3">3</span></td><td>3</td></tr>
+  </tbody>
+</table>
+
+<h3>Finding something to watch: how classes 7 to 9 combine</h3>
+<div class="cols" style="margin-top:8px">
+  <div>
+    <ol>
+      <li>The user searches, or the home screen asks for a row. The launcher sends the request to every enabled <b>catalog provider</b> (7).</li>
+      <li>Results are merged by shared ids and de-duplicated. If a <b>recommendation provider</b> (9) is enabled, it reorders them using the user's ratings, states why, and reports how confident it is. Section "Rows, priorities and schedules" below explains how that confidence is used.</li>
+      <li>For the titles shown, <b>availability resolvers</b> (8) add where each one can be watched.</li>
+      <li>The user picks a title and a way to watch. Only then does the launcher open the app or link.</li>
+    </ol>
+    <p>Example: a title search returns matches from an online catalog and from a home media server, ordered by past ratings, with "on your server" and "rent or stream elsewhere" options attached.</p>
+    <p>Search is part of the catalog class. Any source that can list titles can also answer a query, so a separate search class would add nothing.</p>
+  </div>
+  <figure class="fig">
+    <svg viewBox="0 0 320 180" class="mini hl-pall t2" role="img" aria-label="Pipeline: catalogs, recommendation providers and availability are plugins; the launcher opens a target after the user selects it"><use href="#pipe" width="320" height="180"/></svg>
+    <figcaption>The first three stages are plugins. The last stage is the launcher, which acts only after a user selection.</figcaption>
+  </figure>
+</div>
+
+<h3 id="rows-schedules">Rows, priorities and schedules: how a home screen is assembled</h3>
+<p>The launcher fills the rows of the active layout from a list of <b>bindings</b>. A binding connects a source to the home screen: a recommendation provider, a content rows plugin or a launch source. Nothing in this flow requires a plugin to be Tier 3.</p>
+<ul>
+  <li><b>Row slot.</b> Declared by the layout: kind (cards, app tiles, hero banner), height, item size, scroll direction. A layout also declares how many rows it has. That number can be unlimited.</li>
+  <li><b>Binding.</b> A source, a display label, a slot kind, a priority schedule, and an optional confidence floor. The same provider can appear in several bindings.</li>
+  <li><b>Priority schedule.</b> A default priority plus rules such as "weekdays, 6:00 to 8:30 am: priority 1". A lower number means a higher priority. A rule can also switch a binding off. Priority is the only thing a schedule changes.</li>
+  <li><b>Row fill rule.</b> At any moment the launcher orders bindings by their current priority and fills rows from the top. If there are more bindings than rows, the ones below the last row are not used. They are not asked for anything, so an unused provider receives no data. With an unlimited layout every binding gets a row.</li>
+  <li><b>Confidence.</b> A provider reports how well its suggestions fit right now, from 0 to 1, for the row and optionally for each title. The launcher uses it in three ways only: it skips a row whose confidence is below the binding's floor, so the next binding moves up; it breaks ties between equal priorities; and it orders titles inside a row. Confidence never lets a lower priority binding outrank a higher one, so a provider cannot claim high confidence to push ahead.</li>
+  <li><b>Hero slot.</b> A layout may declare a hero slot. It is bound like any row and shows the top title, or rotates the top few, from its provider. A hero needs a backdrop image and a short tagline for each title, and the tagline is the provider's reason text. A provider declares which slot kinds it can serve. If it cannot supply a backdrop, it is not offered for a hero slot.</li>
+  <li><b>Asking order.</b> The launcher asks bindings in priority order and stops when the rows are full. A skipped row is replaced by the next binding. Rows far below the screen can be asked lazily as the user scrolls.</li>
+  <li><b>Manual override.</b> A remote button opens a picker that pins a binding into a row until the next schedule change.</li>
+</ul>
+
+<figure class="fig">
+  <svg viewBox="0 0 760 332" role="img" aria-label="A grid of priorities for three recommendation providers at three times of day, and three snapshots of the home screen showing which two providers get the two rows" style="width:100%;height:auto;font-family:system-ui,sans-serif;font-size:12px;fill:#e8ecf1">
+    <text x="10" y="16" fill="#9aa5b1">Example priorities by time of day. The layout has 2 rows, so priority 3 is not used. Times are illustrative.</text>
+
+    <text x="290" y="38" text-anchor="middle" font-weight="700">Weekday mornings</text>
+    <text x="290" y="53" text-anchor="middle" font-size="11" fill="#9aa5b1">6:00 to 8:30 am</text>
+    <text x="470" y="38" text-anchor="middle" font-weight="700">Evenings</text>
+    <text x="470" y="53" text-anchor="middle" font-size="11" fill="#9aa5b1">7:00 to 11:00 pm</text>
+    <text x="650" y="38" text-anchor="middle" font-weight="700">All other times</text>
+    <text x="650" y="53" text-anchor="middle" font-size="11" fill="#9aa5b1">everything else</text>
+
+    <text x="10" y="79" font-weight="700">For the kids</text><text x="10" y="92" font-size="10" fill="#9aa5b1">school-day picks</text>
+    <rect x="210" y="64" width="160" height="30" rx="5" fill="#d08a1e"/><text x="290" y="83" text-anchor="middle" font-weight="700" fill="#0f1318">Priority 1</text>
+    <rect x="390" y="64" width="160" height="30" rx="5" fill="#27303a" stroke="#3d4957"/><text x="470" y="83" text-anchor="middle" fill="#9aa5b1">Priority 3 &middot; not used</text>
+    <rect x="570" y="64" width="160" height="30" rx="5" fill="#d08a1e"/><text x="650" y="83" text-anchor="middle" font-weight="700" fill="#0f1318">Priority 2</text>
+
+    <text x="10" y="115" font-weight="700">For the family</text><text x="10" y="128" font-size="10" fill="#9aa5b1">shared picks</text>
+    <rect x="210" y="100" width="160" height="30" rx="5" fill="#d08a1e"/><text x="290" y="119" text-anchor="middle" font-weight="700" fill="#0f1318">Priority 2</text>
+    <rect x="390" y="100" width="160" height="30" rx="5" fill="#d08a1e"/><text x="470" y="119" text-anchor="middle" font-weight="700" fill="#0f1318">Priority 2</text>
+    <rect x="570" y="100" width="160" height="30" rx="5" fill="#d08a1e"/><text x="650" y="119" text-anchor="middle" font-weight="700" fill="#0f1318">Priority 1</text>
+
+    <text x="10" y="151" font-weight="700">For parents</text><text x="10" y="164" font-size="10" fill="#9aa5b1">adult picks</text>
+    <rect x="210" y="136" width="160" height="30" rx="5" fill="#27303a" stroke="#3d4957"/><text x="290" y="155" text-anchor="middle" fill="#9aa5b1">Priority 3 &middot; not used</text>
+    <rect x="390" y="136" width="160" height="30" rx="5" fill="#d08a1e"/><text x="470" y="155" text-anchor="middle" font-weight="700" fill="#0f1318">Priority 1</text>
+    <rect x="570" y="136" width="160" height="30" rx="5" fill="#27303a" stroke="#3d4957"/><text x="650" y="155" text-anchor="middle" fill="#9aa5b1">Priority 3 &middot; not used</text>
+
+    <!-- snapshot 1: weekday morning -->
+    <rect x="10" y="186" width="236" height="138" rx="8" fill="#323d49" stroke="#3d4957"/>
+    <text x="22" y="204" fill="#9aa5b1">Weekday morning</text>
+    <rect x="22" y="212" width="212" height="22" rx="5" fill="#27303a" stroke="#3d4957"/><text x="30" y="227" font-size="10" fill="#9aa5b1">Apps</text>
+    <rect x="70" y="215" width="28" height="16" rx="3" fill="#3a4552"/><rect x="104" y="215" width="28" height="16" rx="3" fill="#3a4552"/><rect x="138" y="215" width="28" height="16" rx="3" fill="#3a4552"/><rect x="172" y="215" width="28" height="16" rx="3" fill="#3a4552"/>
+    <rect x="22" y="240" width="212" height="30" rx="5" fill="#d08a1e"/><text x="32" y="260" font-weight="700" fill="#0f1318">For the kids</text>
+    <rect x="140" y="245" width="24" height="20" rx="3" fill="#a86e12"/><rect x="170" y="245" width="24" height="20" rx="3" fill="#a86e12"/><rect x="200" y="245" width="24" height="20" rx="3" fill="#a86e12"/>
+    <rect x="22" y="276" width="212" height="30" rx="5" fill="#d08a1e"/><text x="32" y="296" font-weight="700" fill="#0f1318">For the family</text>
+    <rect x="140" y="281" width="24" height="20" rx="3" fill="#a86e12"/><rect x="170" y="281" width="24" height="20" rx="3" fill="#a86e12"/><rect x="200" y="281" width="24" height="20" rx="3" fill="#a86e12"/>
+
+    <!-- snapshot 2: evening -->
+    <rect x="258" y="186" width="236" height="138" rx="8" fill="#323d49" stroke="#3d4957"/>
+    <text x="270" y="204" fill="#9aa5b1">Evening</text>
+    <rect x="270" y="212" width="212" height="22" rx="5" fill="#27303a" stroke="#3d4957"/><text x="278" y="227" font-size="10" fill="#9aa5b1">Apps</text>
+    <rect x="318" y="215" width="28" height="16" rx="3" fill="#3a4552"/><rect x="352" y="215" width="28" height="16" rx="3" fill="#3a4552"/><rect x="386" y="215" width="28" height="16" rx="3" fill="#3a4552"/><rect x="420" y="215" width="28" height="16" rx="3" fill="#3a4552"/>
+    <rect x="270" y="240" width="212" height="30" rx="5" fill="#d08a1e"/><text x="280" y="260" font-weight="700" fill="#0f1318">For parents</text>
+    <rect x="388" y="245" width="24" height="20" rx="3" fill="#a86e12"/><rect x="418" y="245" width="24" height="20" rx="3" fill="#a86e12"/><rect x="448" y="245" width="24" height="20" rx="3" fill="#a86e12"/>
+    <rect x="270" y="276" width="212" height="30" rx="5" fill="#d08a1e"/><text x="280" y="296" font-weight="700" fill="#0f1318">For the family</text>
+    <rect x="388" y="281" width="24" height="20" rx="3" fill="#a86e12"/><rect x="418" y="281" width="24" height="20" rx="3" fill="#a86e12"/><rect x="448" y="281" width="24" height="20" rx="3" fill="#a86e12"/>
+
+    <!-- snapshot 3: other times -->
+    <rect x="506" y="186" width="236" height="138" rx="8" fill="#323d49" stroke="#3d4957"/>
+    <text x="518" y="204" fill="#9aa5b1">All other times</text>
+    <rect x="518" y="212" width="212" height="22" rx="5" fill="#27303a" stroke="#3d4957"/><text x="526" y="227" font-size="10" fill="#9aa5b1">Apps</text>
+    <rect x="566" y="215" width="28" height="16" rx="3" fill="#3a4552"/><rect x="600" y="215" width="28" height="16" rx="3" fill="#3a4552"/><rect x="634" y="215" width="28" height="16" rx="3" fill="#3a4552"/><rect x="668" y="215" width="28" height="16" rx="3" fill="#3a4552"/>
+    <rect x="518" y="240" width="212" height="30" rx="5" fill="#d08a1e"/><text x="528" y="260" font-weight="700" fill="#0f1318">For the family</text>
+    <rect x="636" y="245" width="24" height="20" rx="3" fill="#a86e12"/><rect x="666" y="245" width="24" height="20" rx="3" fill="#a86e12"/><rect x="696" y="245" width="24" height="20" rx="3" fill="#a86e12"/>
+    <rect x="518" y="276" width="212" height="30" rx="5" fill="#d08a1e"/><text x="528" y="296" font-weight="700" fill="#0f1318">For the kids</text>
+    <rect x="636" y="281" width="24" height="20" rx="3" fill="#a86e12"/><rect x="666" y="281" width="24" height="20" rx="3" fill="#a86e12"/><rect x="696" y="281" width="24" height="20" rx="3" fill="#a86e12"/>
+  </svg>
+  <figcaption>Each provider's priority changes with the time of day. The layout has two rows, so each moment shows the two highest priorities. The third provider is not used and is not asked for anything. If a provider's confidence falls below its floor, its row is skipped and the next provider moves up.</figcaption>
+</figure>
+
+<ul>
+  <li>Schedules, priorities and confidence floors are launcher data. A plugin never sees the schedule. It is asked for a row only when its turn comes.</li>
+  <li>A household writes one recommendation provider per purpose, for example school-day picks for a child and evening picks for two adults. The launcher has no notion of people. Any per-person tuning lives inside the provider.</li>
+  <li>Ratings stay in the launcher's shared store. A provider that needs its own data keeps it itself, within the data level the user approved (see External services and trusted publishers in section 4).</li>
+  <li>The launcher cannot tell who is watching. A schedule by the clock is a guess, which is why the manual override exists.</li>
+</ul>
+
+<h3 id="remote-setup">Setting things up with the remote</h3>
+<p>All configuration can be done with the remote that comes with the TV.</p>
+<ul>
+  <li><b>Baseline input.</b> D-pad, Select, long-press Select and Back. Android TV guidance expects apps to work with those buttons, so nothing in setup depends on anything else.</li>
+  <li><b>Editing a row.</b> Long-press a row to open a menu: change source, edit priorities, set the confidence floor, move, hide.</li>
+  <li><b>Priority editor.</b> A list of time windows. Up and down change a value, left and right move between fields, and Select toggles day chips.</li>
+  <li><b>Time scrubber.</b> Slide a time of day and see which bindings take the rows at that moment. It shows the same picture as the figure above, for your own setup.</li>
+  <li><b>Extra buttons are optional.</b> Menu, color keys, brand buttons and voice keys differ by remote and firmware, and some never reach an app. A "press a button" step records whichever key the TV exposes, and nothing depends on it. A "Now showing" chip on screen replaces a missing override button.</li>
+  <li><b>Plugins never receive remote keys.</b> Key handling stays in the core.</li>
+  <li><b>Setup is data.</b> Bindings, priorities and floors export and import as a file, so labels and long lists can be edited on a PC or phone.</li>
+</ul>
+<!-- ============ 2. DETAILS ============ -->
+<h2 id="details"><span class="n">2</span>Class details</h2>
+<p class="lede">Each class has a written contract: what the launcher sends, what the plugin returns, and what it cannot do. The diagram highlights the screen area the class controls.</p>
+
+<article class="card t0" id="c-theme">
+  <header><span class="num">1</span><h3>Theme and layout</h3><span class="tier t0">Tier 0 · no code</span></header>
+  <p class="purpose">Changes how the home screen looks and how it is arranged.</p>
+  <div class="cols">
+    <dl>
+      <dt>Launcher sends</dt><dd>Nothing. The launcher reads the pack.</dd>
+      <dt>Plugin provides</dt><dd>A pack: color and type tokens, corner radius, a focus effect from a fixed set, a layout template (rows, grid, gallery, carousel), icon mappings by package name. A template lists its <b>row slots</b>: for each, a kind (cards, app tiles, hero banner), height, item size and scroll direction. It also says how many rows it has, which may be unlimited.</dd>
+      <dt>Applies</dt><dd>When the user selects the pack.</dd>
+      <dt>Cannot</dt><dd>Run code, use the network, or read data.</dd>
+    </dl>
+    <figure class="fig">
+      <svg viewBox="0 0 320 180" class="mini hl-theme" role="img" aria-label="Every element outlined: theme affects all of the screen's appearance"><use href="#screen" width="320" height="180"/></svg>
+      <figcaption><b>Touches:</b> appearance of every element, and arrangement. <b>Leaves alone:</b> what content appears and what runs.</figcaption>
+    </figure>
+  </div>
+  <p class="examples"><b>Examples:</b> gallery layout with one large row, high-contrast pack, large-text pack, icon pack that replaces app icons.</p>
+</article>
+
+<article class="card t1" id="c-wall">
+  <header><span class="num">2</span><h3>Wallpaper providers</h3><span class="tier t1">Tier 1</span></header>
+  <p class="purpose">Supplies background images or video behind the home screen.</p>
+  <div class="cols">
+    <dl>
+      <dt>Launcher sends</dt><dd>Screen size and idle or active state. Optionally the focused tile's package name, off unless the user grants "focus context".</dd>
+      <dt>Plugin returns</dt><dd>An ordered list of media items: image or video source (URL or file), title, credit, display duration.</dd>
+      <dt>Updates</dt><dd>On a timer, on focus change, or on idle change, as the plugin declares.</dd>
+      <dt>Cannot</dt><dd>See the app list, start anything, or draw outside the background layer.</dd>
+    </dl>
+    <figure class="fig">
+      <svg viewBox="0 0 320 180" class="mini hl-bg" role="img" aria-label="Background layer highlighted"><use href="#screen" width="320" height="180"/></svg>
+      <figcaption><b>Touches:</b> the background layer. <b>Leaves alone:</b> rows, header, focus, anything selectable.</figcaption>
+    </figure>
+  </div>
+  <p class="examples"><b>Examples:</b> Apple Aerials video list, public-domain museum art, a local photo folder, an album from a home server, now-playing artwork, generated gradients.</p>
+</article>
+
+<article class="card t1" id="c-widget">
+  <header><span class="num">3</span><h3>Widgets</h3><span class="tier t1">Tier 1</span></header>
+  <p class="purpose">Shows small pieces of live information in header slots.</p>
+  <div class="cols">
+    <dl>
+      <dt>Launcher sends</dt><dd>Slot size, theme tokens, a once-per-minute tick.</dd>
+      <dt>Plugin returns</dt><dd>A small declarative layout (text, icons, bars) or a surface of the slot's size.</dd>
+      <dt>Updates</dt><dd>Plugin pushes updates, rate-limited by the host.</dd>
+      <dt>Cannot</dt><dd>Take focus unless declared focusable, start anything, or exceed its slot.</dd>
+    </dl>
+    <figure class="fig">
+      <svg viewBox="0 0 320 180" class="mini hl-widgets" role="img" aria-label="Header slots highlighted"><use href="#screen" width="320" height="180"/></svg>
+      <figcaption><b>Touches:</b> header slots only. <b>Leaves alone:</b> background and rows.</figcaption>
+    </figure>
+  </div>
+  <p class="examples"><b>Examples:</b> clock and date, weather, next calendar event, Wi-Fi and VPN status, home sensor readings, now playing.</p>
+</article>
+
+<article class="card t1" id="c-idle">
+  <header><span class="num">4</span><h3>Idle providers</h3><span class="tier t1">Tier 1</span></header>
+  <p class="purpose">Replaces the screen with its own content while the TV is idle.</p>
+  <div class="cols">
+    <dl>
+      <dt>Launcher sends</dt><dd>Idle start and stop, screen size, power state.</dd>
+      <dt>Plugin returns</dt><dd>A full-screen surface or a media list, shown only while idle.</dd>
+      <dt>Updates</dt><dd>While idle.</dd>
+      <dt>Cannot</dt><dd>Intercept keys. Any key press ends it and returns to the home screen.</dd>
+    </dl>
+    <figure class="fig">
+      <svg viewBox="0 0 320 180" class="mini hl-idle t1" role="img" aria-label="Whole screen replaced during idle"><use href="#screen" width="320" height="180"/></svg>
+      <figcaption><b>Touches:</b> the whole screen, only while idle. <b>Leaves alone:</b> home screen state, which returns on first key press.</figcaption>
+    </figure>
+  </div>
+  <p class="examples"><b>Examples:</b> Aerials footage, rotating art, ambient clock, photo frame.</p>
+</article>
+
+<article class="card t2" id="c-content">
+  <header><span class="num">5</span><h3>Content rows</h3><span class="tier t2">Tier 2</span></header>
+  <p class="purpose">Fills rows with cards. Selecting a card opens something.</p>
+  <div class="cols">
+    <dl>
+      <dt>Launcher sends</dt><dd>Row slot size, locale, which card the user selected.</dd>
+      <dt>Plugin returns</dt><dd>Rows of cards: title, image, subtitle, and a target to open on selection.</dd>
+      <dt>Updates</dt><dd>On a timer or when the launcher becomes visible.</dd>
+      <dt>Cannot</dt><dd>Open anything itself. The launcher opens the target after the user selects the card.</dd>
+    </dl>
+    <figure class="fig">
+      <svg viewBox="0 0 320 180" class="mini hl-content" role="img" aria-label="Content card row highlighted"><use href="#screen" width="320" height="180"/></svg>
+      <figcaption><b>Touches:</b> the rows it owns. <b>Leaves alone:</b> app rows, header, background.</figcaption>
+    </figure>
+  </div>
+  <p class="examples"><b>Examples:</b> continue watching from a media server, news headlines (RSS), photo albums, upcoming fixtures, saved links.</p>
+</article>
+
+<article class="card t2" id="c-launch">
+  <header><span class="num">6</span><h3>Launch sources</h3><span class="tier t2">Tier 2</span></header>
+  <p class="purpose">Supplies the things a user can open. The installed-apps list is itself one of these plugins.</p>
+  <div class="cols">
+    <dl>
+      <dt>Launcher sends</dt><dd>Nothing by default. May request the installed-app list with a grant.</dd>
+      <dt>Plugin returns</dt><dd>Launchable targets: id, label, icon, and how to open it (app intent, HDMI input, URL, remote host).</dd>
+      <dt>Updates</dt><dd>On install or removal events, or on a timer.</dd>
+      <dt>Cannot</dt><dd>Open a target by itself. Users sort, group and hide targets in the launcher.</dd>
+    </dl>
+    <figure class="fig">
+      <svg viewBox="0 0 320 180" class="mini hl-apps" role="img" aria-label="App tile row highlighted"><use href="#screen" width="320" height="180"/></svg>
+      <figcaption><b>Touches:</b> tiles in app rows and the dock. <b>Leaves alone:</b> other rows and the background.</figcaption>
+    </figure>
+  </div>
+  <p class="examples"><b>Examples:</b> installed apps, HDMI and tuner inputs, web shortcuts, game-streaming hosts, smart-home scenes, network shares.</p>
+</article>
+
+<article class="card t2" id="c-catalog">
+  <header><span class="num">7</span><h3>Catalog providers</h3><span class="tier t2">Tier 2</span></header>
+  <p class="purpose">Supplies titles and metadata for browsing and for search.</p>
+  <div class="cols">
+    <dl>
+      <dt>Launcher sends</dt><dd>A browse request or a search query, and the locale. Nothing about what is installed or watched.</dd>
+      <dt>Plugin returns</dt><dd>Titles: stable ids (TMDB, IMDb, or its own), type, year, artwork, ratings, genres, and any credit text its source requires. May accept ratings back if the user approves.</dd>
+      <dt>Updates</dt><dd>On request, within the caching limits of its source.</dd>
+      <dt>Cannot</dt><dd>See installed apps or watch history, or open anything.</dd>
+    </dl>
+    <figure class="fig">
+      <svg viewBox="0 0 320 180" class="mini hl-p1 t2" role="img" aria-label="Pipeline with the catalog stage highlighted"><use href="#pipe" width="320" height="180"/></svg>
+      <figcaption><b>Touches:</b> the pool of titles that search and recommendations draw from. <b>Leaves alone:</b> installed apps, history and ratings.</figcaption>
+    </figure>
+  </div>
+  <p class="examples"><b>Examples:</b> TMDB lists and search, lists from a list-keeping service, a Jellyfin or Plex library, an RSS feed, a folder of local files.</p>
+  <div class="note"><b>Search.</b> The launcher sends each query to every enabled catalog, merges results by shared ids, and removes duplicates. Plugins that need an API key use the user's own key.</div>
+</article>
+
+<article class="card t2" id="c-avail">
+  <header><span class="num">8</span><h3>Availability resolvers</h3><span class="tier t2">Tier 2</span></header>
+  <p class="purpose">Answers where a title can be watched and how to open it.</p>
+  <div class="cols">
+    <dl>
+      <dt>Launcher sends</dt><dd>A title with its external ids, the services the user listed in settings, and the region.</dd>
+      <dt>Plugin returns</dt><dd>Ways to watch: service, app target or deep link, and whether it is included, a rental or a purchase, when known.</dd>
+      <dt>Updates</dt><dd>On request, cached.</dd>
+      <dt>Cannot</dt><dd>Open anything, or know which services the user pays for beyond the list the user entered.</dd>
+    </dl>
+    <figure class="fig">
+      <svg viewBox="0 0 320 180" class="mini hl-p3 t2" role="img" aria-label="Pipeline with the availability stage highlighted"><use href="#pipe" width="320" height="180"/></svg>
+      <figcaption><b>Touches:</b> adds ways to watch to search results and detail views. <b>Leaves alone:</b> the catalog and the ranking.</figcaption>
+    </figure>
+  </div>
+  <p class="examples"><b>Examples:</b> TMDB watch-provider data (sourced from JustWatch, credit required, no full deep links), per-app deep-link templates kept in a public repository, Android TV Watch Next entries, the user's own media server.</p>
+</article>
+
+<article class="card t2" id="c-recs">
+  <header><span class="num">9</span><h3>Recommendation providers</h3><span class="tier t2">Tier 2</span></header>
+  <p class="purpose">Ranks and proposes titles from candidates, ratings and history, and says why.</p>
+  <div class="cols">
+    <dl>
+      <dt>Launcher sends</dt><dd>A candidate pool, and the slot kind and size it is filling. Ratings or watch history only at the data level the user approved for this provider.</dd>
+      <dt>Plugin returns</dt><dd>A ranked list with a reason for each title (for example "because you rated a similar title highly"), and a confidence from 0 to 1 for the list and optionally for each title. For a hero slot, titles can carry a backdrop image and a short tagline. The plugin declares which slot kinds it can serve.</dd>
+      <dt>Updates</dt><dd>On request, when ratings change, and when its binding comes up for a row on the schedule.</dd>
+      <dt>Cannot</dt><dd>Open anything, or receive more data than the level the user approved. A provider that uses an external service also needs a trusted publisher (section 4).</dd>
+    </dl>
+    <figure class="fig">
+      <svg viewBox="0 0 320 180" class="mini hl-p2 t2" role="img" aria-label="Pipeline with the recommendation provider stage highlighted"><use href="#pipe" width="320" height="180"/></svg>
+      <figcaption><b>Touches:</b> the order of titles and the reason shown. <b>Leaves alone:</b> which titles exist and how to open them.</figcaption>
+    </figure>
+  </div>
+  <p class="examples"><b>Examples:</b> a rule set ("unwatched, rated 4 or higher, under two hours"), an on-device model, a community list ranked by your ratings, a recommendation provider running on your own server.</p>
+  <div class="note"><b>Ratings.</b> The launcher owns the rating buttons and stores ratings on the device. Recommendation providers read them. A catalog plugin may write ratings back to a service only if the user approves it for that plugin. A provider can also keep its own data if it needs tuning for one household member or one time of day. Providers are local unless they declare an external service. Priority and confidence are set in the binding, not by the provider.</div>
+</article>
+
+<article class="card t3" id="c-auto">
+  <header><span class="num">10</span><h3>Automation</h3><span class="tier t3">Tier 3</span></header>
+  <p class="purpose">Reacts to events and performs actions without the user pressing anything.</p>
+  <div class="cols">
+    <dl>
+      <dt>Launcher sends</dt><dd>Events: boot, wake, idle, input change, button press, app opened or closed, network change, time.</dd>
+      <dt>Plugin returns</dt><dd>Actions: open a target, switch profile, change wallpaper set, remap a button, show a notice. Privileged actions need a system grant.</dd>
+      <dt>Updates</dt><dd>Event driven.</dd>
+      <dt>Cannot</dt><dd>Act invisibly. Every automation is listed in settings and each action is logged.</dd>
+    </dl>
+    <figure class="fig">
+      <svg viewBox="0 0 320 180" class="mini hl-auto t3" role="img" aria-label="No screen area changes; a small notice shows an automation fired"><use href="#screen" width="320" height="180"/></svg>
+      <figcaption><b>Touches:</b> behavior, not layout. Only an optional notice appears. <b>Leaves alone:</b> everything drawn on screen.</figcaption>
+    </figure>
+  </div>
+  <p class="examples"><b>Examples:</b> open a chosen app at boot, switch to an evening profile at 7 pm, long-press for an input picker, return home after 10 minutes in an app.</p>
+</article>
+
+<article class="card t3" id="c-policy">
+  <header><span class="num">11</span><h3>Profiles and policy</h3><span class="tier t3">Tier 3</span></header>
+  <p class="purpose">Decides what each profile can see, and when.</p>
+  <div class="cols">
+    <dl>
+      <dt>Launcher sends</dt><dd>Active profile, list of targets, current time.</dd>
+      <dt>Plugin returns</dt><dd>Rules: which targets and rows are visible per profile, PIN gates, schedules, daily time budgets.</dd>
+      <dt>Updates</dt><dd>On profile switch and on schedule.</dd>
+      <dt>Cannot</dt><dd>Act as a security boundary. See the note below.</dd>
+    </dl>
+    <figure class="fig">
+      <svg viewBox="0 0 320 180" class="mini hl-policy t3" role="img" aria-label="Some app tiles dimmed with a lock badge"><use href="#screen" width="320" height="180"/></svg>
+      <figcaption><b>Touches:</b> which tiles and rows are visible or locked, and PIN prompts. <b>Leaves alone:</b> the apps themselves, wallpaper, theme.</figcaption>
+    </figure>
+  </div>
+  <div class="note"><b>Limit.</b> A launcher can hide and lock what its own screen shows. It cannot stop someone from opening Settings, installing a different launcher, or using ADB. For enforcement, use platform controls such as Google TV kids profiles. This class is for presentation and convenience on top of them.</div>
+  <p class="examples"><b>Examples:</b> kids profile with an allow-list, bedtime lock, per-app PIN, guest mode.</p>
+</article>
+
+<!-- ============ 3. TRUST ============ -->
+<h2 id="trust"><span class="n">3</span>Capabilities by class</h2>
+<p class="lede">The ladder repeats the tier order. The table shows exactly what each class can do. Definitions and worst cases are in <a href="#tiers">Trust tiers</a> at the front.</p>
+
+<figure class="fig">
+  <svg viewBox="0 0 760 236" class="ladder" role="img" aria-label="Four tiers from declarative packs to control plugins; reach grows with tier" style="width:100%;height:auto">
+    <g>
+      <text x="0" y="31" font-weight="700" fill="#7f93ba">Tier 0</text>
+      <rect x="110" y="8" width="170" height="40" rx="5" fill="#7f93ba"/>
+      <text x="124" y="33" fill="#0f1318">Theme and layout</text>
+
+      <text x="0" y="89" font-weight="700" fill="#2aa3a5">Tier 1</text>
+      <rect x="110" y="66" width="330" height="40" rx="5" fill="#2aa3a5"/>
+      <text x="124" y="91" fill="#0f1318">Wallpaper · Widgets · Idle</text>
+
+      <text x="0" y="147" font-weight="700" fill="#d08a1e">Tier 2</text>
+      <rect x="110" y="124" width="560" height="40" rx="5" fill="#d08a1e"/>
+      <text x="124" y="149" fill="#0f1318">Content rows &middot; Launch sources &middot; Catalogs &middot; Availability &middot; Recommendations</text>
+
+      <text x="0" y="205" font-weight="700" fill="#e5586c">Tier 3</text>
+      <rect x="110" y="182" width="650" height="40" rx="5" fill="#e5586c"/>
+      <text x="124" y="207" fill="#0f1318">Automation · Profiles and policy</text>
+    </g>
+  </svg>
+  <figcaption>Bar length shows ordering of reach. It is illustrative, not a measurement.</figcaption>
+</figure>
+
+
+
+<h3>What each class can do</h3>
+<table>
+  <thead>
+    <tr><th>Class</th><th class="c">Draws on screen</th><th class="c">Network</th><th class="c">Sees installed apps</th><th class="c">Starts apps</th><th class="c">Acts without input</th><th class="c">Restricts user</th><th class="c">Reads watch history</th><th class="c">Needs system grant</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>1 Theme and layout</td><td class="c">●</td><td class="c">○</td><td class="c">○</td><td class="c">○</td><td class="c">○</td><td class="c">○</td><td class="c">&#9675;</td><td class="c">○</td></tr>
+    <tr><td>2 Wallpaper</td><td class="c">●</td><td class="c">●</td><td class="c">○</td><td class="c">○</td><td class="c">○</td><td class="c">○</td><td class="c">&#9675;</td><td class="c">○</td></tr>
+    <tr><td>3 Widgets</td><td class="c">●</td><td class="c">◐</td><td class="c">○</td><td class="c">○</td><td class="c">○</td><td class="c">○</td><td class="c">&#9675;</td><td class="c">○</td></tr>
+    <tr><td>4 Idle</td><td class="c">●</td><td class="c">◐</td><td class="c">○</td><td class="c">○</td><td class="c">○</td><td class="c">○</td><td class="c">&#9675;</td><td class="c">○</td></tr>
+    <tr><td>5 Content rows</td><td class="c">●</td><td class="c">●</td><td class="c">○</td><td class="c">◐ on selection</td><td class="c">○</td><td class="c">○</td><td class="c">&#9675;</td><td class="c">○</td></tr>
+    <tr><td>6 Launch sources</td><td class="c">●</td><td class="c">◐</td><td class="c">●</td><td class="c">◐ on selection</td><td class="c">○</td><td class="c">○</td><td class="c">&#9675;</td><td class="c">○</td></tr>
+    <tr><td>7 Catalog providers</td><td class="c">&#9679;</td><td class="c">&#9679;</td><td class="c">&#9675;</td><td class="c">&#9675;</td><td class="c">&#9675;</td><td class="c">&#9675;</td><td class="c">&#9675;</td><td class="c">&#9675;</td></tr>
+    <tr><td>8 Availability resolvers</td><td class="c">&#9679;</td><td class="c">&#9679;</td><td class="c">&#9675;</td><td class="c">&#9680; on selection</td><td class="c">&#9675;</td><td class="c">&#9675;</td><td class="c">&#9675;</td><td class="c">&#9675;</td></tr>
+    <tr><td>9 Recommendation providers</td><td class="c">&#9679;</td><td class="c">&#9680;</td><td class="c">&#9675;</td><td class="c">&#9675;</td><td class="c">&#9675;</td><td class="c">&#9675;</td><td class="c">&#9680;</td><td class="c">&#9675;</td></tr>
+    <tr><td>10 Automation</td><td class="c">○</td><td class="c">◐</td><td class="c">◐</td><td class="c">●</td><td class="c">●</td><td class="c">○</td><td class="c">&#9675;</td><td class="c">◐</td></tr>
+    <tr><td>11 Profiles and policy</td><td class="c">◐</td><td class="c">○</td><td class="c">●</td><td class="c">○</td><td class="c">◐</td><td class="c">●</td><td class="c">&#9675;</td><td class="c">◐</td></tr>
+  </tbody>
+</table>
+<p class="legend">● normal for this class &nbsp; ◐ optional, declared by the plugin and approved by the user &nbsp; ○ not available</p>
+<p>Defaults: every capability is denied. A plugin declares what it needs, and the launcher lists those requests at install time in plain language. The launcher controls what it hands a plugin: the installed-app list, ratings, history, the schedule. It can withdraw those later. It cannot take back a network permission that an installed plugin already has, and it cannot see what a plugin sends. For network use the declaration is a disclosure, and trust in the publisher is the control. A system grant means a permission Android only allows through ADB or a system setting, which the user has to apply deliberately.</p>
+<p><b>Combination rule.</b> A provider that can reach the network never receives watch history. It receives ratings only if its publisher is trusted and the user chooses that data level by name. Recommendation providers are local by default. See External services and trusted publishers in section 4.</p>
+
+<!-- ============ 4. ECOSYSTEM ============ -->
+<h2 id="ecosystem"><span class="n">4</span>Open ecosystem</h2>
+<p class="lede">Each rule below exists to block a specific way an ecosystem becomes closed in practice.</p>
+
+<table>
+  <thead><tr><th style="width:24%">Rule</th><th>What it means</th><th style="width:28%">Failure it prevents</th></tr></thead>
+  <tbody>
+    <tr><td>Public spec per class</td><td>Each class has a written contract and a versioned schema in the repository.</td><td>Plugins that depend on unpublished behavior.</td></tr>
+    <tr><td>No gated capabilities</td><td>The core never withholds a class, capability or setting behind payment or an account.</td><td>A paid tier that controls who can use plugins.</td></tr>
+    <tr><td>Any APK can be a plugin</td><td>Plugins install from any source. The index is a convenience, not a requirement.</td><td>Distribution through a single store.</td></tr>
+    <tr><td>Many indexes</td><td>An index is a signed JSON file anyone can host. The launcher ships with one default and lets users add more.</td><td>One index acting as a chokepoint.</td></tr>
+    <tr><td>Source required for the default index</td><td>The default index lists only plugins with an OSI-approved license and a source link. Other indexes can list anything.</td><td>Closed plugins in the default listing.</td></tr>
+    <tr><td>Stable contracts</td><td>Semantic versions per class. Two major versions supported at once, with 12 months notice before removal.</td><td>API churn breaking plugins that are still used.</td></tr>
+    <tr><td>No telemetry in core</td><td>Plugins that show ads or collect usage data are not eligible for the default index. Network hosts a plugin declares are shown at install. The launcher cannot verify them.</td><td>Tracking and ad injection.</td></tr>
+    <tr><td>Credit travels with data</td><td>Items can carry required credit and license text, and the launcher displays it. For example, TMDB's watch-provider data requires crediting JustWatch.</td><td>Quietly breaking the terms of a data source.</td></tr>
+    <tr><td>User-supplied keys</td><td>Plugins that use keyed services use the user's own key. The project ships no shared keys.</td><td>The ecosystem depending on one account that can be revoked.</td></tr>
+    <tr><td>Reference plugin and tests per class</td><td>Every class ships a working open plugin and a conformance test kit.</td><td>Lock-in: another launcher can adopt the same spec and run the same plugins.</td></tr>
+    <tr><td>Open governance</td><td>Spec changes go through public proposals in the repository. Maintainers are listed. Decisions and reasons are recorded.</td><td>Decisions made privately by one party.</td></tr>
+  </tbody>
+</table>
+
+<h3 id="external-services">External services and trusted publishers</h3>
+<p>A recommendation provider can use an external service, for example a model run by its publisher. The provider then handles the user's ratings on someone else's server. This is the riskiest use of a Tier 2 class, so it has its own rules.</p>
+
+<p><b>What the launcher can and cannot enforce.</b></p>
+<ul>
+  <li><b>Can:</b> decide whether to ask a provider at all, and what data to hand over.</li>
+  <li><b>Cannot:</b> see or block what a plugin does with data it has received, or which servers it contacts. Android lets an app with the network permission reach any host. Declared hosts are disclosure, not enforcement.</li>
+</ul>
+<p>The real control is whom the user trusts. The rules below limit how much a trusted publisher is handed.</p>
+
+<table>
+  <thead><tr><th style="width:22%">Data level</th><th>What the provider receives</th><th style="width:30%">Allowed for</th></tr></thead>
+  <tbody>
+    <tr><td>1 Candidate pool</td><td>Titles to rank, and the slot it is filling. No personal data.</td><td>Any provider. The default for external ones.</td></tr>
+    <tr><td>2 Plus ratings</td><td>The user's ratings of titles.</td><td>Local providers. External providers only from a trusted publisher, chosen by name.</td></tr>
+    <tr><td>3 Plus watch history</td><td>What was watched and when.</td><td>Local providers only.</td></tr>
+  </tbody>
+</table>
+
+<ul>
+  <li><b>Local by default.</b> A provider with no external service declaration is local. External providers are marked "External service" wherever they appear.</li>
+  <li><b>Trusted publishers.</b> An external provider installs only if its publisher is on the user's trusted list. A publisher is identified by a signing-key fingerprint, a name and a source URL. Adding one takes a deliberate screen that names the publisher and what it could receive. Removing a publisher disables its providers.</li>
+  <li><b>Disclosure at install.</b> The declared hosts and a link to the publisher's privacy statement are shown. The launcher does not verify either.</li>
+  <li><b>Data log.</b> Settings lists each time data was handed to a provider: which provider, which data level, and when.</li>
+  <li><b>Unused means untouched.</b> A binding that falls below the last row (see section 1) is not asked, so it receives nothing.</li>
+  <li><b>Your own service.</b> If you run the service yourself, you are the publisher. You add your own key to the trusted list.</li>
+  <li><b>Default index.</b> External providers are listed only with a source link and a privacy statement, and flagged as external. Other indexes can list anything.</li>
+</ul>
+
+<h3>Authoring path</h3>
+<ul>
+  <li>A template repository for each class, building out of the box.</li>
+  <li>A mock host app to run and test a plugin without a TV.</li>
+  <li>Per-class docs generated from the same schemas the launcher uses.</li>
+</ul>
+
+<h3>Limits of openness</h3>
+<ul>
+  <li>Open source does not prevent a malicious plugin. Permissions, tiers and review for the default index reduce the risk. They do not remove it.</li>
+  <li>The launcher cannot stop a user from adding a third-party index that lists plugins we would exclude.</li>
+  <li>Profiles and policy plugins are not a security boundary (see class 11).</li>
+</ul>
+
+<!-- ============ 5. PHASING ============ -->
+<h2 id="phasing"><span class="n">5</span>Phasing and scope</h2>
+<table>
+  <thead><tr><th style="width:90px">Phase</th><th>Delivers</th><th style="width:36%">Reason</th></tr></thead>
+  <tbody>
+    <tr><td>0</td><td>Core, plugin host, permission screens, one default index</td><td>Everything else depends on it.</td></tr>
+    <tr><td>1</td><td>Theme and layout (with row slots), Wallpaper providers, Launch sources</td><td>Launch sources are needed for the launcher to be usable (installed apps are one). Theme and Wallpaper are the lowest-risk visible features.</td></tr>
+    <tr><td>2</td><td>Widgets, Idle providers, Content rows, Catalog providers, Availability resolvers, local Recommendation providers, row bindings with priority schedules and confidence</td><td>Local providers need no trust machinery beyond data levels. Bindings with priorities are the core of the home screen. Catalogs and availability give search and "where to watch".</td></tr>
+    <tr><td>3</td><td>Recommendation providers that use an external service, Automation, Profiles and policy</td><td>External providers need the trusted-publisher list, data levels and the data log. Automation and Profiles are the highest privilege. All need real use of earlier phases first.</td></tr>
+  </tbody>
+</table>
+
+<h3>Out of scope</h3>
+<ul>
+  <li>Replacing the launcher core or its focus engine through a plugin.</li>
+  <li>Building full applications inside the launcher. Plugins hand off to apps.</li>
+  <li>Playing protected streaming content. That stays in the streaming apps.</li>
+  <li>Ad or sponsored-recommendation insertion.</li>
+  <li>Scheduled lineups or linear channels, meaning deciding which title plays at what time. Rows can appear on a schedule, but nothing here schedules playback.</li>
+  <li>Syncing settings across devices (possible later, not designed here).</li>
+</ul>
+
+<!-- ============ 6. DECISIONS ============ -->
+<h2 id="decisions"><span class="n">6</span>Open decisions</h2>
+<table>
+  <thead><tr><th style="width:26%">Decision</th><th>Options</th><th style="width:30%">Current leaning</th></tr></thead>
+  <tbody>
+    <tr><td>Core license</td><td>Decided: Apache-2.0 for the whole project, including the core, the SDK and the sample plugins. It includes a patent grant. It also permits closed-source forks, so the openness rules in section 4 bind the spec and the default index, not forks.</td><td>Apache-2.0. Do not copy code from GPL projects such as Homie into this project. Read them as references only.</td></tr>
+    <tr><td>Plugin form</td><td>Separate APKs (strong isolation, any language, heavier install) or scripts run inside the launcher (lighter, weaker isolation).</td><td>APKs for Tiers 1 to 3. Data packs for Tier 0.</td></tr>
+    <tr><td>Compatibility with existing wallpaper plugins</td><td>Implement the same interface as a popular closed launcher so its plugins run here, or define our own.</td><td>Undecided. Needs a read of that interface and the license of its sample project. Not verified.</td></tr>
+    <tr><td>Kids and profiles</td><td>Launcher-level only, or integrate with Google TV profiles and Family Link.</td><td>Launcher-level first, documented as non-enforcing.</td></tr>
+    <tr><td>Confidence scale and floor</td><td>0 to 1 reported by the provider. A floor set per binding, or one global floor.</td><td>0 to 1, floor per binding, default off. Priority always outranks confidence.</td></tr>
+    <tr><td>Hero source</td><td>A hero slot with its own binding, or always the first title of the top row.</td><td>Its own binding, so it can use a different provider and schedule.</td></tr>
+    <tr><td>Row count and cost</td><td>Layouts may declare unlimited rows. The launcher could ask providers lazily as rows come into view.</td><td>Unlimited allowed. Ask in priority order and render rows lazily.</td></tr>
+    <tr><td>Trusted publisher identity</td><td>A signing-key fingerprint only, or the key plus a verified domain.</td><td>Key fingerprint, with name and source URL shown. Domain verification later.</td></tr>
+    <tr><td>External data level</td><td>Candidate pool only by default, or ratings by default.</td><td>Candidate pool only. Raising it is a deliberate step that names the publisher.</td></tr>
+    <tr><td>Manual override length</td><td>Until the next schedule change, until a set time, or until the TV sleeps.</td><td>Until the next schedule change.</td></tr>
+    <tr><td>Where ratings live</td><td>Local only on the device, or optional write-back to a list service through catalog plugins.</td><td>Local first. Write-back only with approval per plugin.</td></tr>
+    <tr><td>Default data source</td><td>TMDB needs a per-user key, attribution, and non-commercial use. The alternative is user-run sources only (Jellyfin, Plex, local files).</td><td>Ship no default. Document TMDB setup. Re-read its terms before any bundled use.</td></tr>
+    <tr><td>Availability mapping</td><td>A public repository of per-app deep-link templates maintained by contributors, or mappings kept inside each plugin.</td><td>Public repository, because deep-link formats differ per app and change.</td></tr>
+    <tr><td>Name</td><td>FireEscape was chosen. Still to check: trademark exposure, the Android package id, and a domain.</td><td>FireEscape. Keep "Fire TV" and any Amazon or Roku mark out of the name, tagline and icon.</td></tr>
+  </tbody>
+</table>
+
+<!-- ============ APPENDICES ============ -->
+<div class="appendix">
+<h2 id="tech"><span class="n">A</span>Appendix: Technology</h2>
+<p class="lede">Brief, and subject to change. None of the proposal above depends on the specifics here.</p>
+<ul>
+  <li><b>Platform:</b> Android TV and Google TV. Kotlin with Jetpack Compose for TV for the launcher UI.</li>
+  <li><b>Plugin transport (Tiers 1 to 3):</b> separate APKs. Each exposes a bound service with a versioned AIDL interface per class. The launcher finds plugins by a per-class intent action.</li>
+  <li><b>Declarative packs (Tier 0):</b> JSON validated against JSON Schema, with image assets. No executable content.</li>
+  <li><b>Video:</b> the launcher plays video with Media3. Plugins return sources, not decoders.</li>
+  <li><b>Permissions:</b> capabilities declared in plugin metadata. The launcher controls the data it passes across the plugin interface. Android grants network access at install, so the launcher cannot revoke it or inspect traffic. System-level actions rely on ADB-granted permissions, as Android requires.</li>
+  <li><b>Trusted publishers:</b> stored as signing-certificate digests. Updates to a plugin must match the key it was installed with.</li>
+  <li><b>Row resolution:</b> bindings are asked in priority order until rows are full, with results cached per binding for a time-to-live the provider suggests.</li>
+  <li><b>Remote input:</b> Compose for TV key handling for D-pad, Select, long-press Select and Back. Optional extra keys are learned by logging the key codes the device delivers.</li>
+  <li><b>Distribution:</b> signed JSON index. Updates must match the installed plugin's signing key.</li>
+  <li><b>Testing:</b> conformance tests per class, run against a mock host.</li>
+</ul>
+
+<figure class="fig">
+  <svg viewBox="0 0 770 292" role="img" aria-label="Architecture: indexes and packs feed the launcher, which talks to plugin APKs through a versioned interface" style="width:100%;height:auto;font-family:system-ui,sans-serif;font-size:13px;fill:#e8ecf1">
+    <rect x="10" y="30" width="180" height="60" rx="6" fill="#171d24" stroke="#3d4957"/>
+    <text x="100" y="57" text-anchor="middle" font-weight="600">Plugin index</text>
+    <text x="100" y="75" text-anchor="middle" fill="#9aa5b1">signed JSON, any host</text>
+
+    <rect x="10" y="190" width="180" height="60" rx="6" fill="#171d24" stroke="#3d4957"/>
+    <text x="100" y="217" text-anchor="middle" font-weight="600">Theme packs</text>
+    <text x="100" y="235" text-anchor="middle" fill="#9aa5b1">JSON and images, no code</text>
+
+    <rect x="250" y="10" width="290" height="262" rx="10" fill="#1d242c" stroke="#6b7684"/>
+    <text x="265" y="30" font-weight="700">Launcher</text>
+    <rect x="270" y="42" width="250" height="52" rx="6" fill="#171d24" stroke="#3d4957"/>
+    <text x="395" y="64" text-anchor="middle" font-weight="600">Core</text>
+    <text x="395" y="82" text-anchor="middle" fill="#9aa5b1">focus, layout, settings</text>
+    <rect x="270" y="108" width="250" height="60" rx="6" fill="#171d24" stroke="#3d4957"/>
+    <text x="395" y="132" text-anchor="middle" font-weight="600">Plugin host</text>
+    <text x="395" y="150" text-anchor="middle" fill="#9aa5b1">permission broker, rate limits</text>
+    <rect x="270" y="182" width="250" height="76" rx="6" fill="#171d24" stroke="#3d4957"/>
+    <text x="395" y="208" text-anchor="middle" font-weight="600">Installer and pack loader</text>
+    <text x="395" y="226" text-anchor="middle" fill="#9aa5b1">checks signatures and schemas</text>
+
+    <text x="600" y="30" font-weight="600">Plugin APKs</text>
+    <text x="600" y="48" fill="#9aa5b1" font-size="12">separate processes</text>
+    <rect x="600" y="56" width="160" height="52" rx="6" fill="#2aa3a5"/><text x="680" y="87" text-anchor="middle" fill="#0f1318">Tier 1 plugins</text>
+    <rect x="600" y="124" width="160" height="52" rx="6" fill="#d08a1e"/><text x="680" y="155" text-anchor="middle" fill="#0f1318">Tier 2 plugins</text>
+    <rect x="600" y="192" width="160" height="52" rx="6" fill="#e5586c"/><text x="680" y="223" text-anchor="middle" fill="#0f1318">Tier 3 plugins</text>
+
+    <path d="M190 60 H230 V220 H268" fill="none" stroke="#9aa5b1" stroke-width="1.5" marker-end="url(#arr)"/>
+    <path d="M190 220 H268" fill="none" stroke="#9aa5b1" stroke-width="1.5" marker-end="url(#arr)"/>
+    <path d="M520 138 L598 82" fill="none" stroke="#9aa5b1" stroke-width="1.5" marker-end="url(#arr)" marker-start="url(#arr)"/>
+    <path d="M520 138 L598 150" fill="none" stroke="#9aa5b1" stroke-width="1.5" marker-end="url(#arr)" marker-start="url(#arr)"/>
+    <path d="M520 138 L598 218" fill="none" stroke="#9aa5b1" stroke-width="1.5" marker-end="url(#arr)" marker-start="url(#arr)"/>
+    <text x="680" y="270" text-anchor="middle" fill="#9aa5b1" font-size="12">versioned interface per class</text>
+  </svg>
+  <figcaption>Packs and indexes are data the launcher validates. Code plugins run in their own processes and reach the launcher only through the host.</figcaption>
+</figure>
+
+<h3>Example plugin declaration (illustrative)</h3>
+<pre>&lt;service android:name=".AerialsWallpaper" android:exported="true"&gt;
+  &lt;intent-filter&gt;
+    &lt;action android:name="org.example.fireescape.plugin.WALLPAPER"/&gt;
+  &lt;/intent-filter&gt;
+  &lt;meta-data android:name="fireescape.api"          android:value="wallpaper/1"/&gt;
+  &lt;meta-data android:name="fireescape.capabilities" android:value="network"/&gt;
+  &lt;meta-data android:name="fireescape.source"       android:value="https://example.org/repo"/&gt;
+&lt;/service&gt;</pre>
+
+<h2 id="evidence"><span class="n">B</span>Appendix: Evidence and gaps</h2>
+<p><b>Checked while preparing this:</b></p>
+<ul>
+  <li>One popular closed launcher treats third-party wallpaper plugins as a paid feature, per the README of a plugin built for it.</li>
+  <li>The Aerials wallpaper plugin accepts custom JSON or M3U media lists, which is the model the Wallpaper class follows.</li>
+  <li>One open-source Compose-for-TV launcher reviewed (Homie) has no plugin hooks, no content provider and no service binding in its code.</li>
+  <li>TMDB's watch-provider data comes from JustWatch and requires crediting it. TMDB states it does not offer full deep links. Its API is free for non-commercial use with attribution.</li>
+  <li>Fire TV and Apple TV search work through catalog and availability feeds that streaming services supply to the platform owner, per Amazon's and Apple's partner documentation.</li>
+  <li>Android TV guidance expects apps to work with a remote that has only up, down, left, right, Select, Back and Home. One open-source launcher's notes report that an accessibility key filter received extra remote buttons on one TV model and not on another.</li>
+  <li>Android TV's TV provider is how apps publish Watch Next entries. One launcher's documentation says reading them needs the READ_TV_LISTINGS permission, which can be granted from a shell. Not tested on a device.</li>
+</ul>
+<p><b>Not checked:</b></p>
+<ul>
+  <li>The wire protocol of that closed launcher's plugin interface, and the license of its sample plugin project.</li>
+  <li>How far Android TV lets a launcher enforce restrictions beyond its own screen.</li>
+  <li>Whether any mechanism lets a launcher limit another app's network access. The design assumes none, which is why it relies on trusted publishers.</li>
+  <li>Which extra buttons the onn. 4K Plus remote delivers to an app. This needs a test on the device.</li>
+  <li>Whether Google voice search can be reached from a third-party launcher, and how many streaming apps support deep links to specific titles.</li>
+  <li>Plugin support in the other open-source launchers. None advertised it in the pages read, which is not proof that none have it.</li>
+</ul>
+</div>
+
+<footer>Draft generated 2026-11-21. Diagrams are illustrative.</footer>
+</main>
+</div>
+</body>
+</html>

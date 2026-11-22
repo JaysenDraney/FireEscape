@@ -1,0 +1,53 @@
+---
+title: Recommendation providers
+description: Class 9. Ranks and proposes titles from candidates, ratings and history, says why, and reports how confident it is.
+---
+
+import { Badge, Aside } from '@astrojs/starlight/components';
+
+<Badge text="Tier 2 · Content and targets" variant="caution" /> <Badge text="Phase 2 local, 3 external" variant="note" />
+
+Ranks and proposes titles from candidates, ratings and history, and says why.
+
+## Contract
+
+| | |
+| --- | --- |
+| **Launcher sends** | A candidate pool, and the slot kind and size it is filling. Ratings or watch history only at the data level the user approved for this provider. |
+| **Plugin returns** | A ranked list with a reason for each title, and a confidence from 0 to 1 for the list and optionally for each title. For a hero slot, titles can carry a backdrop image and a short tagline. The plugin declares which slot kinds it can serve. |
+| **Updates** | On request, when ratings change, and when its binding comes up for a row on the schedule. |
+| **Cannot** | Open anything, or receive more data than the level the user approved. A provider that uses an external service also needs a trusted publisher. |
+
+## What it touches
+
+The order of titles and the reason shown. It leaves which titles exist and how to open them alone.
+
+## Examples
+
+- A rule set: "unwatched, rated 4 or higher, under two hours"
+- An on-device model
+- A community list ranked by your ratings
+- A provider running on your own server
+
+## Priority and confidence
+
+A provider does not choose its own row or its own schedule. Those belong to the **binding**: the provider, a slot, a label and a priority schedule. See [Rows, priorities and schedules](/concepts/rows-and-schedules/).
+
+Confidence is advisory. It can make the launcher skip a row when a provider has nothing good to suggest, so the next binding moves up. It never lets a lower priority binding outrank a higher one.
+
+## Data levels
+
+<Aside type="caution" title="External services">
+A provider that contacts an external service handles the user's ratings on someone else's server. The launcher cannot see or block what a plugin does with data it has received. See [External services and trusted publishers](/ecosystem/open-ecosystem/#external-services-and-trusted-publishers).
+</Aside>
+
+| Level | What the provider receives | Allowed for |
+| --- | --- | --- |
+| 1 Candidate pool | Titles to rank, and the slot it is filling. No personal data. | Any provider. The default for external ones. |
+| 2 Plus ratings | The user's ratings of titles. | Local providers. External providers only from a trusted publisher, chosen by name. |
+| 3 Plus watch history | What was watched and when. | Local providers only. |
+
+## Notes
+
+- Ratings are stored by the launcher on the device. Providers read them. A catalog plugin may write ratings back to a service only if the user approves it for that plugin.
+- A provider can keep its own data if it needs tuning for one household member or one time of day.

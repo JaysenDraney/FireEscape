@@ -1,0 +1,86 @@
+# Runs the PR's code with a read-only token. It never posts anything.
+# The screenshot-comment workflow picks up its artifacts (ADR 0003).
+name: Screenshot compare
+
+on:
+  pull_request:
+    paths-ignore:
+      - "website/**"
+      - "docs/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: screenshot-compare-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+
+      - name: Unit, focus and screenshot tests (PR's own references)
+        id: verify
+        continue-on-error: true
+        run: ./gradlew :core-model:test :launcher:verifyRoborazziDebug --stacktrace
+
+      - name: Compare against main's reference screenshots
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          mkdir -p review/new
+          # New reference images added by this PR (no baseline on main).
+          git diff --name-only --diff-filter=A "$BASE_SHA" HEAD > added.txt
+          echo "Files added since base:"; cat added.txt
+          grep -E '^launcher/src/screenshots/[A-Za-z0-9_.-]+\.png$' added.txt | while read -r f; do cp "$f" review/new/; done || true
+          # Swap in main's references and render the PR's UI against them.
+          rm -rf launcher/src/screenshots
+          git checkout "$BASE_SHA" -- launcher/src/screenshots 2>/dev/null || mkdir -p launcher/src/screenshots
+          ./gradlew :launcher:compareRoborazziDebug --stacktrace
+          mkdir -p review/diff
+          find launcher/build/outputs/screenshots_comparison -name '*_compare.png' -exec cp {} review/diff/ \; 2>/dev/null || true
+          ls -R review
+
+      - name: Save PR number
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: echo "$PR_NUMBER" > review/pr_number
+
+      - name: Upload images for the comment workflow
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: screenshot-review
+          path: review/
+          retention-days: 14
+
+      - name: Upload Roborazzi report and test results
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: screenshot-report
+          path: |
+            launcher/build/reports/
+            launcher/build/outputs/screenshots_comparison/
+            launcher/build/test-results/
+            core-model/build/reports/
+          retention-days: 14
+
+      - name: Fail if tests failed or references are out of date
+        if: steps.verify.outcome == 'failure'
+        run: |
+          echo "::error::Tests failed, or the PR changes the UI without re-recording references. Run ./gradlew :launcher:recordRoborazziDebug and commit launcher/src/screenshots."
+          exit 1

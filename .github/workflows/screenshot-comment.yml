@@ -1,0 +1,118 @@
+# Runs from the base repository with write access. It runs no PR code:
+# it only reads the compare workflow's artifacts, validates them and posts images (ADR 0003).
+name: Screenshot comment
+
+on:
+  workflow_run:
+    workflows: ["Screenshot compare"]
+    types: [completed]
+
+permissions: {}
+
+jobs:
+  comment:
+    if: github.event.workflow_run.event == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Download review images
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: screenshot-review
+          path: review
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+
+      - name: Validate PR number
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          pr="$(head -c 16 review/pr_number | tr -d '[:space:]')"
+          [[ "$pr" =~ ^[0-9]+$ ]] || { echo "::error::Invalid PR number"; exit 1; }
+          # The PR must exist, be open, and point at the commit that produced the artifact.
+          actual_sha="$(gh api "repos/$REPO/pulls/$pr" --jq 'select(.state=="open") | .head.sha')"
+          [[ "$actual_sha" == "$HEAD_SHA" ]] || { echo "::error::PR $pr does not match run head $HEAD_SHA"; exit 1; }
+          echo "number=$pr" >> "$GITHUB_OUTPUT"
+
+      - name: Push images to companion branch
+        id: push
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ steps.pr.outputs.number }}
+        run: |
+          set -euo pipefail
+          branch="companion/pr-$PR"
+          mkdir site && cd site
+          for d in diff new; do
+            mkdir -p "$d"
+            find ../review/"$d" -maxdepth 1 -type f -name '*.png' 2>/dev/null | while read -r f; do
+              name="$(basename "$f")"
+              [[ "$name" =~ ^[A-Za-z0-9_.-]+$ ]] && cp "$f" "$d/$name"
+            done
+          done
+          count="$(find . -name '*.png' | wc -l)"
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+          [[ "$count" -gt 0 ]] || exit 0
+          git init -q -b "$branch"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Screenshots for PR #$PR"
+          git push -q -f "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" "HEAD:refs/heads/$branch"
+
+      - name: Build comment
+        env:
+          REPO: ${{ github.repository }}
+          BRANCH: ${{ steps.push.outputs.branch }}
+          COUNT: ${{ steps.push.outputs.count }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          {
+            echo "<!-- fireescape-screenshot-report -->"
+            echo "### Screenshot report for ${SHA:0:7}"
+            echo
+            if [[ "$COUNT" -eq 0 ]]; then
+              echo "No screenshot changes against \`main\`."
+            fi
+            for d in diff new; do
+              files="$(cd site && find "$d" -name '*.png' 2>/dev/null | sort)"
+              [[ -n "$files" ]] || continue
+              if [[ "$d" == diff ]]; then echo "#### Changed (reference, diff, new)"; else echo "#### New screenshots"; fi
+              echo
+              for f in $files; do
+                echo "**$(basename "$f")**"
+                echo
+                echo "![$(basename "$f")](https://github.com/$REPO/blob/$BRANCH/$f?raw=true)"
+                echo
+              done
+            done
+            echo "Full Roborazzi HTML report and test results: \`screenshot-report\` artifact on the [compare run]($RUN_URL)."
+          } > comment.md
+
+      - name: Find existing comment
+        id: find
+        uses: peter-evans/find-comment@b30e6a3c0ed37e7c023ccd3f1db5c6c0b0c23aad # v4.0.0
+        with:
+          issue-number: ${{ steps.pr.outputs.number }}
+          comment-author: "github-actions[bot]"
+          body-includes: "<!-- fireescape-screenshot-report -->"
+
+      - name: Post or update comment
+        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5.0.0
+        with:
+          comment-id: ${{ steps.find.outputs.comment-id }}
+          issue-number: ${{ steps.pr.outputs.number }}
+          body-path: comment.md
+          edit-mode: replace

@@ -56,7 +56,7 @@ fun Tile(tag: String) {
             .testTag(tag)
             .width(200.dp)
             .height(112.dp)
-            .background(Color(0xFF2A3440), RoundedCornerShape(8.dp))
+            .background(Color(0xFF7A3B1E), RoundedCornerShape(8.dp))
             .border(
                 width = if (focused) 4.dp else 0.dp,
                 color = if (focused) Color.White else Color.Transparent,

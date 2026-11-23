@@ -54,9 +54,12 @@ jobs:
           mkdir site && cd site
           for d in diff new; do
             mkdir -p "$d"
-            find ../review/"$d" -maxdepth 1 -type f -name '*.png' 2>/dev/null | while read -r f; do
+            # Empty folders are dropped from artifacts, so the source folder may not exist.
+            [[ -d ../review/"$d" ]] || continue
+            for f in ../review/"$d"/*.png; do
+              [[ -f "$f" ]] || continue
               name="$(basename "$f")"
-              [[ "$name" =~ ^[A-Za-z0-9_.-]+$ ]] && cp "$f" "$d/$name"
+              if [[ "$name" =~ ^[A-Za-z0-9_.-]+$ ]]; then cp "$f" "$d/$name"; fi
             done
           done
           count="$(find . -name '*.png' | wc -l)"

@@ -44,8 +44,9 @@ jobs:
           set -euo pipefail
           mkdir -p review/new
           # New reference images added by this PR (no baseline on main).
-          git diff --name-only --diff-filter=A "$BASE_SHA" HEAD -- 'launcher/src/screenshots/*.png' \
-            | while read -r f; do cp "$f" review/new/; done
+          git diff --name-only --diff-filter=A "$BASE_SHA" HEAD > added.txt
+          echo "Files added since base:"; cat added.txt
+          grep -E '^launcher/src/screenshots/[A-Za-z0-9_.-]+\.png$' added.txt | while read -r f; do cp "$f" review/new/; done || true
           # Swap in main's references and render the PR's UI against them.
           rm -rf launcher/src/screenshots
           git checkout "$BASE_SHA" -- launcher/src/screenshots 2>/dev/null || mkdir -p launcher/src/screenshots

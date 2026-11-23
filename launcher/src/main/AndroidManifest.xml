@@ -8,6 +8,14 @@
         android:name="android.hardware.touchscreen"
         android:required="false" />
 
+    <!-- Android 11+ hides other apps unless declared. The launcher must see services that
+         answer a plugin intent action. Real classes are added here in M0.5. -->
+    <queries>
+        <intent>
+            <action android:name="org.fireescape.plugin.SPIKE" />
+        </intent>
+    </queries>
+
     <application
         android:allowBackup="false"
         android:label="FireEscape"

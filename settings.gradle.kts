@@ -18,3 +18,7 @@ rootProject.name = "FireEscape"
 
 include(":core-model")
 include(":launcher")
+
+// M0.2 spike: plugin transport across APKs. See docs/adr/0004-plugin-form-and-transport.md.
+include(":plugin-api")
+include(":spike-plugin")

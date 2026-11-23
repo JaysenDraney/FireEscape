@@ -10,20 +10,21 @@ Job summaries cannot show images reliably, and artifacts are zip files that cann
 
 ## Decision
 
-We use the pattern from Roborazzi's [compare-on-comment sample](https://github.com/takahirom/roborazzi-compare-on-github-comment-sample), with these workflows:
+We use the pattern from Roborazzi's [compare-on-comment sample](https://github.com/takahirom/roborazzi-compare-on-github-comment-sample), adapted to committed reference images (ADR 0002). There are three workflows:
 
-1. **Store.** On pushes to `main`, record screenshots and upload them as an artifact. This is the baseline.
-2. **Compare.** On pull requests, download the baseline from `main`, run `compareRoborazziDebug`, and upload the images, the Roborazzi HTML report and the test results as artifacts with a 14-day retention. Also save the PR number.
-3. **Comment.** After Compare finishes (`workflow_run`), push the `*_compare.png` images to a `companion_<branch>` branch and post or update one PR comment with a table of the images.
+1. **Screenshot compare** (`pull_request`). Runs the tests and `verifyRoborazziDebug` against the PR's own committed references, so a PR that changes the UI must re-record them. It then swaps in `main`'s references and runs `compareRoborazziDebug`, and collects screenshots that are new in the PR. It uploads the images, the Roborazzi HTML report and the test results as artifacts with a 14-day retention, and saves the PR number.
+2. **Screenshot comment** (`workflow_run`, after compare). Pushes the images to a `companion/pr-<number>` branch and posts or updates one PR comment that shows them.
+3. **Screenshot cleanup** (`pull_request_target`, on close). Deletes the companion branch.
 
+The sample's separate "store" workflow is not needed, because `main`'s reference images are in the repository.
 The diff tool is Roborazzi's own compare task. It writes a side-by-side `[name]_compare.png` for each change. The HTML report is published as an artifact. We do not add a second diff tool until the Roborazzi output proves insufficient.
 
 Fork pull requests are supported by keeping the two trust levels apart. The Compare workflow runs the PR's code with a read-only token. The Comment workflow runs from the base repository, has write permissions and only handles artifacts.
 
 ## Changes from the sample
 
-- Validate the PR number from the artifact: it must be numeric and must appear in `workflow_run.pull_requests`.
-- Pass branch names only through environment variables and restrict file names to a safe character set.
+- Validate the PR number from the artifact: it must be numeric, and the PR must be open and point at the commit that produced the artifact.
+- Name companion branches by PR number, never by the fork's branch name. Restrict image file names to a safe character set. Pass event values to scripts only through environment variables.
 - Delete the companion branch when the PR closes. The sample's cleanup is disabled.
 - Pin third-party actions to commit SHAs.
 - Use our own Gradle modules and Java version.
@@ -40,4 +41,4 @@ Fork pull requests are supported by keeping the two trust levels apart. The Comp
 - Reviewers see changed screenshots inline on each PR. Unchanged screenshots produce no output.
 - The workflow grants `contents: write` and `pull-requests: write` to a job that handles artifacts from untrusted PRs. The changes above are required for that reason.
 - Companion branches add images to the repository until they are deleted.
-- Not yet verified: fork PR behavior and how the sample behaves with TV-sized screenshots. We verify both when the workflows first run.
+- Not yet verified: fork PR behavior and how the comment looks with 1920x1080 screenshots. We verify both when the workflows first run.

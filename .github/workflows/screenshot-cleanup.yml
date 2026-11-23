@@ -1,0 +1,23 @@
+# Deletes a PR's companion screenshot branch when the PR closes.
+# pull_request_target is used only so fork PRs get a token that can delete the branch.
+# It checks out and runs no PR code.
+name: Screenshot cleanup
+
+on:
+  pull_request_target:
+    types: [closed]
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Delete companion branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: gh api -X DELETE "repos/$REPO/git/refs/heads/companion/pr-$PR" || echo "No companion branch for PR $PR"

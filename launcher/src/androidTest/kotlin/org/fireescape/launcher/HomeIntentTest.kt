@@ -72,7 +72,11 @@ class HomeIntentTest {
             assertTrue("Settings did not come up", waitUntil { !launcherResumed() })
             assertTrue("HOME did not return to the launcher", pressHomeAndWait(systemHomePackage))
         } finally {
-            previousHome?.let { setHomeActivity(it) }
+            // Best effort: on a fresh image the previous home may not qualify for the
+            // HOME role, and restoring it must not mask the test result.
+            previousHome?.let {
+                shell("cmd package set-home-activity ${it.flattenToShortString()}")
+            }
             systemHomePackage?.let { shell("pm enable $it") }
         }
     }

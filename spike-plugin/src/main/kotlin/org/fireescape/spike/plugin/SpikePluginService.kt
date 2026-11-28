@@ -21,6 +21,9 @@ open class SpikePluginService : Service() {
             Thread.sleep(delayMillis)
             return text
         }
+
+        override fun receiveInstalledApps(packages: MutableList<String>?): String =
+            "apps:" + (packages?.joinToString(",") ?: "")
     }
 
     override fun onBind(intent: Intent): IBinder = binder

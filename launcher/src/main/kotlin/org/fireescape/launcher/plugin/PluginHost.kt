@@ -7,7 +7,9 @@ import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.os.IBinder
 import android.os.RemoteException
+import org.fireescape.model.Grant
 import org.fireescape.model.InstalledPlugin
+import org.fireescape.model.PermissionBroker
 import org.fireescape.model.PluginDescriptor
 import org.fireescape.model.PluginMetadata
 import java.util.concurrent.Callable
@@ -112,6 +114,21 @@ class PluginHost(context: Context) {
         } catch (e: ExecutionException) {
             throw e.cause ?: e
         }
+    }
+
+    /**
+     * Hands data to a plugin only while the grant is active. The broker recomputes the
+     * active set on every call, so withdrawing a grant stops delivery from the next
+     * call on. Returns null when the grant is not active: nothing crosses the interface.
+     */
+    fun <T> callWithGrant(
+        plugin: InstalledPlugin,
+        grant: Grant,
+        granted: Set<Grant>,
+        block: (IBinder) -> T,
+    ): T? {
+        if (grant !in PermissionBroker.activeGrants(plugin, granted)) return null
+        return call(plugin, block)
     }
 
     /** Releases a plugin the host is not using. */

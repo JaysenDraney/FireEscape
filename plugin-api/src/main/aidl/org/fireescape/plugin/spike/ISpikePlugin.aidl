@@ -14,4 +14,7 @@ interface ISpikePlugin {
 
     /** Blocks for the given time before answering, to test client-side timeouts. */
     String slowEcho(String text, long delayMillis);
+
+    /** M0.6: echoes the installed-app list the host handed over, for grant-flow tests. */
+    String receiveInstalledApps(in List<String> packages);
 }

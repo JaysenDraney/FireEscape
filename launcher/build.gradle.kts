@@ -65,3 +65,8 @@ dependencies {
     testImplementation(libs.roborazzi.junit.rule)
     debugImplementation(libs.compose.ui.test.manifest)
 }
+
+// Test JVMs are capped so the Gradle daemon + forked test JVM fit in low-RAM dev machines.
+tasks.withType<Test>().configureEach {
+    maxHeapSize = "700m"
+}

@@ -1,6 +1,6 @@
 # 0004. Plugin form and transport
 
-Status: Proposed. Needs the owner's approval before it is Accepted (roadmap milestone M0.2).
+Status: Accepted. Approved by the owner (JaysenDraney) on 2026-11-27 in PR #6 (roadmap milestone M0.2).
 
 ## Context
 
@@ -49,7 +49,7 @@ The spike is one run on one emulator image. It has not been run on a real TV dev
 4. **Crash recovery is automatic.** With `BIND_AUTO_CREATE`, the system restarted the crashed plugin and reconnected without launcher code. `ServiceConnection` also reports when a binding is dead and must be rebound, for example after an update ([Android docs](https://developer.android.com/reference/android/content/ServiceConnection)).
 5. **Versioning is ours to enforce.** Android's stable AIDL tooling, which checks backward compatibility, is part of the platform build system ([AOSP docs](https://source.android.com/docs/core/architecture/aidl/stable-aidl)). I have not found an equivalent for app Gradle builds, so this is unverified. The plan is our own rules: methods are only added at the end of an interface, a version method answers first, and the major version is in the metadata so the host can refuse a plugin before binding.
 
-## Decision (proposed)
+## Decision
 
 Option A for Tiers 1 to 3: each plugin is a separate APK that exports one bound service per class, with a versioned AIDL interface per class, found by a per-class intent action `org.fireescape.plugin.<CLASS>`. Tier 0 stays declarative data packs.
 

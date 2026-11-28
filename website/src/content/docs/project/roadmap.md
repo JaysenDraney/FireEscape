@@ -23,7 +23,7 @@ Each phase is split into milestones. A milestone is small enough to review in a 
 | [M0.2](#m02-decision-plugin-form-and-transport) | Decision: plugin form and transport | Done |
 | [M0.3](#m03-launcher-shell) | Launcher shell: home screen, focus engine, settings store | Done |
 | [M0.4](#m04-emulator-test-layer-in-ci) | Emulator test layer in CI | Done |
-| [M0.5](#m05-plugin-host-and-api-v1-skeleton) | Plugin host and plugin API v1 skeleton | Not started |
+| [M0.5](#m05-plugin-host-and-api-v1-skeleton) | Plugin host and plugin API v1 skeleton | Done |
 | [M0.6](#m06-permission-screens) | Permission screens | Not started |
 | [M0.7](#m07-default-plugin-index) | Default plugin index | Not started |
 | [M0.8](#m08-conformance-kit-and-mock-host) | Conformance kit and mock host | Not started |
@@ -152,17 +152,19 @@ On the Google TV emulator image the system launcher keeps HOME while its process
 
 #### M0.5 Plugin host and API v1 skeleton
 
+**Status: Done** (pull request #11).
+
 **Delivers:** the part of the core that finds, binds and talks to plugins, and the first version of the plugin API.
 
 **Depends on:** M0.2.
 
 **Acceptance criteria**
 
-- [ ] The host finds a plugin by its per-class intent action and reads its declared API version, capabilities and source URL.
-- [ ] A plugin that declares an API major version the launcher does not support is listed as incompatible and never bound.
-- [ ] A plugin that crashes, hangs or answers late does not freeze or crash the launcher. Calls time out after a limit set in the spec.
-- [ ] The host unbinds plugins it is not using.
-- [ ] The API is published in the repository with a version number.
+- [x] The host finds a plugin by its per-class intent action and reads its declared API version, capabilities and source URL.
+- [x] A plugin that declares an API major version the launcher does not support is listed as incompatible and never bound.
+- [x] A plugin that crashes, hangs or answers late does not freeze or crash the launcher. Calls time out after a limit set in the spec.
+- [x] The host unbinds plugins it is not using.
+- [x] The API is published in the repository with a version number.
 
 **Tests**
 

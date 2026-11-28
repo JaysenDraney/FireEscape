@@ -24,7 +24,7 @@ Each phase is split into milestones. A milestone is small enough to review in a 
 | [M0.3](#m03-launcher-shell) | Launcher shell: home screen, focus engine, settings store | Done |
 | [M0.4](#m04-emulator-test-layer-in-ci) | Emulator test layer in CI | Done |
 | [M0.5](#m05-plugin-host-and-api-v1-skeleton) | Plugin host and plugin API v1 skeleton | Done |
-| [M0.6](#m06-permission-screens) | Permission screens | Not started |
+| [M0.6](#m06-permission-screens) | Permission screens | Done |
 | [M0.7](#m07-default-plugin-index) | Default plugin index | Not started |
 | [M0.8](#m08-conformance-kit-and-mock-host) | Conformance kit and mock host | Not started |
 | **Phase 1: A usable launcher** | | |
@@ -173,17 +173,19 @@ On the Google TV emulator image the system launcher keeps HOME while its process
 
 #### M0.6 Permission screens
 
+**Status: Done** (pull request #12).
+
 **Delivers:** the screens where a user sees and approves what a plugin can do.
 
 **Depends on:** M0.5.
 
 **Acceptance criteria**
 
-- [ ] The screen shows the tier first, then each capability the plugin declares.
-- [ ] A plugin is placed in the tier of its class. It cannot claim a lower one.
-- [ ] Tier 3 plugins need a separate approval with a plain-language warning.
-- [ ] Declared network use is labeled as shown, not enforced.
-- [ ] Withdrawing a grant stops the launcher handing that data to the plugin from the next call on.
+- [x] The screen shows the tier first, then each capability the plugin declares.
+- [x] A plugin is placed in the tier of its class. It cannot claim a lower one.
+- [x] Tier 3 plugins need a separate approval with a plain-language warning.
+- [x] Declared network use is labeled as shown, not enforced.
+- [x] Withdrawing a grant stops the launcher handing that data to the plugin from the next call on.
 
 **Tests**
 

@@ -72,17 +72,25 @@ class HomeIntentTest {
             assertTrue("Settings did not come up", waitUntil { !launcherResumed() })
             assertTrue("HOME did not return to the launcher", pressHomeAndWait(systemHomePackage))
         } finally {
-            previousHome?.let { setHomeActivity(it) }
+            // Best effort: on a fresh image the previous home may not qualify for the
+            // HOME role, and restoring it must not mask the test result.
+            previousHome?.let {
+                shell("cmd package set-home-activity ${it.flattenToShortString()}")
+            }
             systemHomePackage?.let { shell("pm enable $it") }
         }
     }
 
     private fun setHomeActivity(component: ComponentName) {
-        val out = shell("cmd package set-home-activity ${component.flattenToShortString()}")
-        assertTrue(
-            "set-home-activity failed: $out",
-            !out.contains("Error", ignoreCase = true) && !out.contains("Exception"),
-        )
+        // On a fresh device the role service may not have picked up the just-installed
+        // package yet, so qualification can fail transiently. Retry before giving up.
+        var out = ""
+        repeat(5) { attempt ->
+            out = shell("cmd package set-home-activity ${component.flattenToShortString()}")
+            if (!out.contains("Error", ignoreCase = true) && !out.contains("Exception")) return
+            if (attempt < 4) Thread.sleep(2_000)
+        }
+        assertTrue("set-home-activity failed after retries: $out", false)
     }
 
     private fun pressHomeAndWait(stoppedPackage: String?): Boolean {

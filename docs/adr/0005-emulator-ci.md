@@ -1,6 +1,6 @@
 # 0005. Emulator test layer in CI
 
-Status: Proposed. Needs the owner's approval before it is Accepted (roadmap milestone M0.4).
+Status: Accepted. Approved by the owner (JaysenDraney) on 2026-11-28 in PR #10 (roadmap milestone M0.4).
 
 ## Context
 
@@ -11,7 +11,7 @@ only on a local Google TV API 36 emulator. M0.4 requires these tests in GitHub A
 measured record of run time and flakiness over at least 10 runs, and a recorded decision on
 running them on every pull request or nightly.
 
-## Decision (proposed)
+## Decision
 
 - Run L4 with `reactivecircus/android-emulator-runner` (v2.38.0, SHA-pinned) on
   `ubuntu-latest` with KVM enabled, headless: `-no-window -gpu swiftshader_indirect

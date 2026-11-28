@@ -52,5 +52,11 @@ no code cause.
 - Every code PR pays the measured emulator run time on top of the JVM and screenshot job.
 - The Google TV system launcher's HOME monopoly (recorded in M0.3) applies in CI too; the
   HOME test disables and stops it for the run and restores it afterwards.
+- A freshly booted CI AVD differs from a long-used development AVD: the system launcher
+  does not qualify for the HOME role until the image is provisioned, so the launcher can
+  become the role holder on install, and restoring the previous home can fail. The HOME
+  test therefore restores device state best-effort and retries the home selection while
+  the role service picks up a fresh install. Verified on both a fresh and a provisioned
+  AVD locally.
 - The snapshot cache must be invalidated when the image, profile or emulator options
   change; the cache key carries the image and profile.

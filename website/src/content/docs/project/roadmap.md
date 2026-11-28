@@ -22,7 +22,7 @@ Each phase is split into milestones. A milestone is small enough to review in a 
 | [M0.1](#m01-project-scaffold-and-test-harness) | Project scaffold and test harness | Done |
 | [M0.2](#m02-decision-plugin-form-and-transport) | Decision: plugin form and transport | Done |
 | [M0.3](#m03-launcher-shell) | Launcher shell: home screen, focus engine, settings store | Done |
-| [M0.4](#m04-emulator-test-layer-in-ci) | Emulator test layer in CI | Not started |
+| [M0.4](#m04-emulator-test-layer-in-ci) | Emulator test layer in CI | Done |
 | [M0.5](#m05-plugin-host-and-api-v1-skeleton) | Plugin host and plugin API v1 skeleton | Not started |
 | [M0.6](#m06-permission-screens) | Permission screens | Not started |
 | [M0.7](#m07-default-plugin-index) | Default plugin index | Not started |
@@ -138,13 +138,15 @@ On the Google TV emulator image the system launcher keeps HOME while its process
 
 #### M0.4 Emulator test layer in CI
 
-**Delivers:** L4 tests running on an Android TV virtual device in GitHub Actions. ADR 0002 left it unverified whether this can run headless in CI.
+**Status: Done** (pull requests #9 and #10).
+
+**Delivers:** L4 tests running on an Android TV virtual device in GitHub Actions. ADR 0002 left it unverified whether this can run headless in CI; [ADR 0005](https://github.com/JaysenDraney/FireEscape/blob/main/docs/adr/0005-emulator-ci.md) answers it and records the measurements and the every-PR cadence decision.
 
 **Acceptance criteria**
 
-- [ ] An instrumented test runs on an Android TV system image in GitHub Actions and reports pass or fail.
-- [ ] The run time and how often it fails for no code reason are measured over at least 10 runs and written down.
-- [ ] A decision on running it on every pull request or nightly is recorded in an ADR.
+- [x] An instrumented test runs on an Android TV system image in GitHub Actions and reports pass or fail.
+- [x] The run time and how often it fails for no code reason are measured over at least 10 runs and written down.
+- [x] A decision on running it on every pull request or nightly is recorded in an ADR.
 
 **Tests:** a single L4 smoke test that starts the launcher and checks it shows the home screen.
 

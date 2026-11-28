@@ -59,6 +59,7 @@ dependencies {
     implementation(libs.tv.material)
 
     testImplementation(libs.junit)
+    testImplementation(libs.org.json)
     testImplementation(libs.robolectric)
     testImplementation(platform(libs.compose.bom))
     testImplementation(libs.compose.ui.test.junit4)

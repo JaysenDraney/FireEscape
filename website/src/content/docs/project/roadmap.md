@@ -25,7 +25,7 @@ Each phase is split into milestones. A milestone is small enough to review in a 
 | [M0.4](#m04-emulator-test-layer-in-ci) | Emulator test layer in CI | Done |
 | [M0.5](#m05-plugin-host-and-api-v1-skeleton) | Plugin host and plugin API v1 skeleton | Done |
 | [M0.6](#m06-permission-screens) | Permission screens | Done |
-| [M0.7](#m07-default-plugin-index) | Default plugin index | Not started |
+| [M0.7](#m07-default-plugin-index) | Default plugin index | Done |
 | [M0.8](#m08-conformance-kit-and-mock-host) | Conformance kit and mock host | Not started |
 | **Phase 1: A usable launcher** | | |
 | [M1.1](#m11-installed-apps) | Installed apps as the built-in launch source | Not started |
@@ -196,17 +196,19 @@ On the Google TV emulator image the system launcher keeps HOME while its process
 
 #### M0.7 Default plugin index
 
+**Status: Done** (pull request #13).
+
 **Delivers:** the signed JSON index format, its schema, and one default index the launcher ships with.
 
 **Depends on:** M0.5.
 
 **Acceptance criteria**
 
-- [ ] The index JSON Schema is published in the repository.
-- [ ] The launcher rejects an index whose signature does not verify.
-- [ ] The launcher rejects a plugin update signed with a different key than the installed version.
-- [ ] A user can add a second index by URL and remove it.
-- [ ] The default index lists only plugins with an OSI-approved license and a source link.
+- [x] The index JSON Schema is published in the repository.
+- [x] The launcher rejects an index whose signature does not verify.
+- [x] The launcher rejects a plugin update signed with a different key than the installed version.
+- [x] A user can add a second index by URL and remove it.
+- [x] The default index lists only plugins with an OSI-approved license and a source link.
 
 **Tests**
 

@@ -38,5 +38,8 @@
         <activity
             android:name=".plugin.PermissionActivity"
             android:exported="true" />
+        <activity
+            android:name=".plugin.IndexActivity"
+            android:exported="true" />
     </application>
 </manifest>

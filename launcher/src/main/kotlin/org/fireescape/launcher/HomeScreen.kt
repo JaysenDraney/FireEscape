@@ -3,45 +3,123 @@ package org.fireescape.launcher
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 
-/** Placeholder home screen. Real rows come from the plugin host in a later phase. */
+/**
+ * Home screen shell. Shelves are placeholders until the plugin host (M0.5) supplies
+ * real rows. Shelves scroll, and Compose brings a newly focused tile into view, so
+ * D-pad focus never leaves the screen.
+ */
 @Composable
-fun HomeScreen(rowTitles: List<String>) {
+fun HomeScreen(shelves: List<Shelf>) {
+    when (val content = HomeContent.from(shelves)) {
+        HomeContent.Empty -> EmptyHome()
+        is HomeContent.Shelves -> ShelvesHome(content.shelves)
+    }
+}
+
+@Composable
+private fun EmptyHome() {
+    Box(
+        modifier = Modifier
+            .testTag("empty_state")
+            .fillMaxSize()
+            .background(Color(0xFF101418)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Text("FireEscape", style = MaterialTheme.typography.displaySmall, color = Color.White)
+            Text("No plugins yet", style = MaterialTheme.typography.titleLarge, color = Color.White)
+            Text(
+                "Install a plugin to fill your home screen.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color(0xFFB8C2CC),
+            )
+        }
+    }
+}
+
+@Composable
+private fun ShelvesHome(shelves: List<Shelf>) {
+    var lastFocused by rememberSaveable { mutableStateOf("tile_0_0") }
+    val requesters = remember { mutableMapOf<String, FocusRequester>() }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                requesters[lastFocused]?.requestFocus()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFF101418))
+            .verticalScroll(rememberScrollState())
             .padding(48.dp),
         verticalArrangement = Arrangement.spacedBy(32.dp),
     ) {
         Text("FireEscape", style = MaterialTheme.typography.displaySmall, color = Color.White)
-        rowTitles.forEachIndexed { rowIndex, title ->
+        shelves.forEachIndexed { rowIndex, shelf ->
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(title, style = MaterialTheme.typography.titleMedium, color = Color.White)
-                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    repeat(4) { column -> Tile(tag = "tile_${rowIndex}_$column") }
+                Text(shelf.title, style = MaterialTheme.typography.titleMedium, color = Color.White)
+                if (shelf.tileCount == 0) {
+                    Text(
+                        "Nothing here yet",
+                        modifier = Modifier.testTag("shelf_empty_$rowIndex"),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color(0xFFB8C2CC),
+                    )
+                } else {
+                    Row(
+                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    ) {
+                        repeat(shelf.tileCount) { column ->
+                            val tag = "tile_${rowIndex}_$column"
+                            Tile(
+                                tag = tag,
+                                requester = requesters.getOrPut(tag) { FocusRequester() },
+                                onFocus = { lastFocused = it },
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -49,7 +127,11 @@ fun HomeScreen(rowTitles: List<String>) {
 }
 
 @Composable
-fun Tile(tag: String) {
+fun Tile(
+    tag: String,
+    requester: FocusRequester = remember { FocusRequester() },
+    onFocus: (String) -> Unit = {},
+) {
     var focused by remember { mutableStateOf(false) }
     Box(
         modifier = Modifier
@@ -62,11 +144,14 @@ fun Tile(tag: String) {
                 color = if (focused) Color.White else Color.Transparent,
                 shape = RoundedCornerShape(8.dp),
             )
-            .onFocusChanged { focused = it.isFocused }
+            .onFocusChanged {
+                focused = it.isFocused
+                if (it.isFocused) onFocus(tag)
+            }
+            .focusRequester(requester)
             .focusable(),
         contentAlignment = Alignment.Center,
     ) {
         Text(tag, color = Color.White)
     }
 }
-

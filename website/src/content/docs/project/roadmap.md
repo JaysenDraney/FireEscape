@@ -21,7 +21,7 @@ Each phase is split into milestones. A milestone is small enough to review in a 
 | **Phase 0: Foundation** | | |
 | [M0.1](#m01-project-scaffold-and-test-harness) | Project scaffold and test harness | Done |
 | [M0.2](#m02-decision-plugin-form-and-transport) | Decision: plugin form and transport | Done |
-| [M0.3](#m03-launcher-shell) | Launcher shell: home screen, focus engine, settings store | Not started |
+| [M0.3](#m03-launcher-shell) | Launcher shell: home screen, focus engine, settings store | Done |
 | [M0.4](#m04-emulator-test-layer-in-ci) | Emulator test layer in CI | Not started |
 | [M0.5](#m05-plugin-host-and-api-v1-skeleton) | Plugin host and plugin API v1 skeleton | Not started |
 | [M0.6](#m06-permission-screens) | Permission screens | Not started |
@@ -114,16 +114,18 @@ Numbers that the design has not fixed yet, such as timeouts and limits, are mark
 
 #### M0.3 Launcher shell
 
+**Status: Done** (pull request #8).
+
 **Delivers:** an app that can be the TV's home screen, a focus engine that rows and plugins build on, and a settings store.
 
 **Acceptance criteria**
 
-- [ ] The launcher can be chosen as the home app on the TV emulator, and pressing Home returns to it.
-- [ ] Back on the home screen never leaves the launcher.
-- [ ] From any focusable element, every D-pad press either moves focus to another element or stays put. Focus is never lost.
-- [ ] Focus returns to the last focused element when the user comes back to the home screen.
-- [ ] Settings survive the app being killed and restarted.
-- [ ] The core contains no plugin-class features of its own.
+- [x] The launcher can be chosen as the home app on the TV emulator, and pressing Home returns to it.
+- [x] Back on the home screen never leaves the launcher.
+- [x] From any focusable element, every D-pad press either moves focus to another element or stays put. Focus is never lost.
+- [x] Focus returns to the last focused element when the user comes back to the home screen.
+- [x] Settings survive the app being killed and restarted.
+- [x] The core contains no plugin-class features of its own.
 
 **Tests**
 
@@ -131,6 +133,8 @@ Numbers that the design has not fixed yet, such as timeouts and limits, are mark
 - L2: D-pad traversal at every edge of a grid of rows, and focus restore.
 - L3: the empty home screen, and one element in its focused state.
 - L4: set as home, press Home, check the launcher is in front. Kill the process and check settings are kept.
+
+On the Google TV emulator image the system launcher keeps HOME while its process is alive, whatever default is selected, so the L4 test disables and stops it for the run and restores it afterwards. Real-device HOME behavior is checked in M1.5.
 
 #### M0.4 Emulator test layer in CI
 

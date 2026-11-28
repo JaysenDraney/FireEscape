@@ -9,6 +9,13 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.requestFocus
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LifecycleRegistry
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -84,6 +91,72 @@ class HomeScreenFocusTest {
         }
 
         composeRule.onNodeWithTag("tile_0_7").assertIsDisplayed()
+    }
+
+    @Test
+    fun upAtTheTopEdgeKeepsFocus() {
+        setShelves(Shelf("One", 4), Shelf("Two", 4))
+        composeRule.onNodeWithTag("tile_0_1").requestFocus()
+
+        press(Key.DirectionUp, "tile_0_1")
+
+        composeRule.onNodeWithTag("tile_0_1").assertIsFocused()
+    }
+
+    @Test
+    fun leftAtTheFirstColumnKeepsFocus() {
+        setShelves(Shelf("Row", 4))
+        composeRule.onNodeWithTag("tile_0_0").requestFocus()
+
+        press(Key.DirectionLeft, "tile_0_0")
+
+        composeRule.onNodeWithTag("tile_0_0").assertIsFocused()
+    }
+
+    @Test
+    fun rightAtTheLastColumnKeepsFocus() {
+        setShelves(Shelf("Row", 4))
+        composeRule.onNodeWithTag("tile_0_3").requestFocus()
+
+        press(Key.DirectionRight, "tile_0_3")
+
+        composeRule.onNodeWithTag("tile_0_3").assertIsFocused()
+    }
+
+    @Test
+    fun downAtTheBottomEdgeKeepsFocus() {
+        setShelves(Shelf("One", 4), Shelf("Two", 4))
+        composeRule.onNodeWithTag("tile_1_2").requestFocus()
+
+        press(Key.DirectionDown, "tile_1_2")
+
+        composeRule.onNodeWithTag("tile_1_2").assertIsFocused()
+    }
+
+    @Test
+    fun focusReturnsToTheLastFocusedTileWhenComingBack() {
+        val owner = object : LifecycleOwner {
+            val registry = LifecycleRegistry(this)
+            override val lifecycle: Lifecycle get() = registry
+        }
+        lateinit var focusManager: FocusManager
+        composeRule.setContent {
+            CompositionLocalProvider(LocalLifecycleOwner provides owner) {
+                focusManager = LocalFocusManager.current
+                HomeScreen(shelves = listOf(Shelf("One", 4), Shelf("Two", 4)))
+            }
+        }
+        owner.registry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
+        composeRule.onNodeWithTag("tile_1_2").requestFocus()
+        composeRule.onNodeWithTag("tile_1_2").assertIsFocused()
+
+        // Leave: focus is cleared while the screen is away.
+        composeRule.runOnIdle { focusManager.clearFocus() }
+        owner.registry.handleLifecycleEvent(Lifecycle.Event.ON_PAUSE)
+        owner.registry.handleLifecycleEvent(Lifecycle.Event.ON_STOP)
+        owner.registry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
+
+        composeRule.onNodeWithTag("tile_1_2").assertIsFocused()
     }
 
     @Test

@@ -60,6 +60,11 @@ class HomeIntentTest {
             }
             assertTrue("HOME did not bring up the launcher", pressHomeAndWait(systemHomePackage))
 
+            // Back on the home screen never leaves the launcher.
+            shell("input keyevent ${KeyEvent.KEYCODE_BACK}")
+            Thread.sleep(1_000)
+            assertTrue("Back left the launcher", launcherResumed())
+
             // Leave home for Settings, then return with HOME.
             target.startActivity(
                 Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),

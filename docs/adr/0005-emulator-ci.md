@@ -28,13 +28,25 @@ running them on every pull request or nightly.
   support stays unverified; the runner with the sdkmanager `google-tv` image is verified
   by the runs recorded below.
 - Cadence: every pull request that changes code (the workflow ignores `website/` and
-  `docs/`), with cancel-in-progress per PR, plus manual dispatch. See the measurements
-  below for the run time this costs.
+  `docs/`), with cancel-in-progress per PR, plus manual dispatch. The test script retries
+  once on failure to absorb transient repository flakes. At a measured ~5.5 minutes per
+  run and no code-cause test failures in 10 runs, every-PR is affordable; nightly-only
+  would let transport and HOME regressions land between runs.
 
 ## Measurements
 
-To be filled in from at least 10 CI runs before acceptance: run times and failures with
-no code cause.
+10 `workflow_dispatch` runs on `main` at commit 5f942af, 2026-11-28, all started within
+16 seconds of each other (parallel, same code):
+
+- 8 passed. Run times 4m40s to 5m53s, median about 5m30s (run-level, including queue).
+- 2 failed (20%) with no code cause, both about 30 seconds in, before any test ran:
+  Gradle could not resolve a plugin artifact from the repositories (Roborazzi in one run,
+  the Kotlin JVM plugin in the other). Transient repository/network failures; both
+  runners also downloaded the Gradle distribution cold.
+- No test failed in any run that reached the tests: the L4 suite itself was 8/8 every
+  time it executed.
+- Mitigation: the test script now retries once on failure, which covers the observed
+  failure mode. A real test failure still fails the job after the retry.
 
 ## Alternatives considered
 

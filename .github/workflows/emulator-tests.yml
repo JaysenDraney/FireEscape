@@ -70,7 +70,8 @@ jobs:
           force-avd-creation: false
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
-          script: ./gradlew :spike-plugin:installDebug && ./gradlew :launcher:connectedDebugAndroidTest --stacktrace
+          # One retry: 2 of 10 measured runs failed on transient plugin resolution (ADR 0005).
+          script: (./gradlew :spike-plugin:installDebug && ./gradlew :launcher:connectedDebugAndroidTest --stacktrace) || (./gradlew :spike-plugin:installDebug && ./gradlew :launcher:connectedDebugAndroidTest --stacktrace)
 
       - name: Upload test reports
         if: failure()

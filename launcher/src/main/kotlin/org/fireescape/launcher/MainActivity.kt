@@ -7,6 +7,7 @@ import androidx.activity.compose.setContent
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent { HomeScreen(rowTitles = listOf("Continue watching", "Apps")) }
+        // No plugin host yet (M0.5): the shell shows its empty state.
+        setContent { HomeScreen(shelves = emptyList()) }
     }
 }

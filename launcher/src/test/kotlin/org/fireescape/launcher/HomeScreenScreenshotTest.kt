@@ -20,7 +20,15 @@ class HomeScreenScreenshotTest {
 
     @Test
     fun homeScreen() {
-        composeRule.setContent { HomeScreen(rowTitles = listOf("Continue watching", "Apps")) }
+        composeRule.setContent {
+            HomeScreen(shelves = listOf(Shelf("Continue watching", 8), Shelf("Apps", 8)))
+        }
         composeRule.onRoot().captureRoboImage("src/screenshots/HomeScreen.png")
+    }
+
+    @Test
+    fun emptyHome() {
+        composeRule.setContent { HomeScreen(shelves = emptyList()) }
+        composeRule.onRoot().captureRoboImage("src/screenshots/HomeScreenEmpty.png")
     }
 }

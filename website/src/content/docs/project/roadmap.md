@@ -26,7 +26,7 @@ Each phase is split into milestones. A milestone is small enough to review in a 
 | [M0.5](#m05-plugin-host-and-api-v1-skeleton) | Plugin host and plugin API v1 skeleton | Done |
 | [M0.6](#m06-permission-screens) | Permission screens | Done |
 | [M0.7](#m07-default-plugin-index) | Default plugin index | Done |
-| [M0.8](#m08-conformance-kit-and-mock-host) | Conformance kit and mock host | Not started |
+| [M0.8](#m08-conformance-kit-and-mock-host) | Conformance kit and mock host | Done |
 | **Phase 1: A usable launcher** | | |
 | [M1.1](#m11-installed-apps) | Installed apps as the built-in launch source | Not started |
 | [M1.2](#m12-launch-sources-api) | Launch sources API and reference plugin | Not started |
@@ -217,15 +217,17 @@ On the Google TV emulator image the system launcher keeps HOME while its process
 
 #### M0.8 Conformance kit and mock host
 
+**Status: Done** (pull request #14).
+
 **Delivers:** the test kit that checks a plugin against its class contract, and a mock host that runs it without the launcher.
 
 **Depends on:** M0.5.
 
 **Acceptance criteria**
 
-- [ ] The kit runs against a plugin APK and reports pass or fail per contract rule.
-- [ ] A deliberately broken sample plugin fails with a message that names the broken rule.
-- [ ] Each reference plugin's CI runs the kit.
+- [x] The kit runs against a plugin APK and reports pass or fail per contract rule.
+- [x] A deliberately broken sample plugin fails with a message that names the broken rule.
+- [x] Each reference plugin's CI runs the kit.
 
 **Tests:** the kit's own L1 tests, and L4 runs against a good and a broken sample plugin.
 

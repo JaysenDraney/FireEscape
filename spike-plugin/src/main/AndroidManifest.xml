@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A plugin is a separate APK with no launcher icon. It exposes one bound service per class. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-feature
+        android:name="android.software.leanback"
+        android:required="false" />
+
+    <application
+        android:allowBackup="false"
+        android:label="FireEscape spike plugin">
+        <service
+            android:name=".SpikePluginService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="org.fireescape.plugin.SPIKE" />
+            </intent-filter>
+            <meta-data
+                android:name="fireescape.api"
+                android:value="spike/1" />
+            <meta-data
+                android:name="fireescape.capabilities"
+                android:value="" />
+            <meta-data
+                android:name="fireescape.source"
+                android:value="https://github.com/JaysenDraney/FireEscape" />
+        </service>
+    </application>
+</manifest>

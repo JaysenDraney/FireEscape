@@ -20,7 +20,7 @@ Each phase is split into milestones. A milestone is small enough to review in a 
 | --- | --- | --- |
 | **Phase 0: Foundation** | | |
 | [M0.1](#m01-project-scaffold-and-test-harness) | Project scaffold and test harness | Done |
-| [M0.2](#m02-decision-plugin-form-and-transport) | Decision: plugin form and transport | Not started |
+| [M0.2](#m02-decision-plugin-form-and-transport) | Decision: plugin form and transport | Done |
 | [M0.3](#m03-launcher-shell) | Launcher shell: home screen, focus engine, settings store | Not started |
 | [M0.4](#m04-emulator-test-layer-in-ci) | Emulator test layer in CI | Not started |
 | [M0.5](#m05-plugin-host-and-api-v1-skeleton) | Plugin host and plugin API v1 skeleton | Not started |
@@ -98,15 +98,17 @@ Numbers that the design has not fixed yet, such as timeouts and limits, are mark
 
 #### M0.2 Decision: plugin form and transport
 
-**Delivers:** an ADR that settles the plugin form, an open decision (see [Still open](#still-open)). The current leaning is separate APKs for Tiers 1 to 3, each exposing a bound service with a versioned AIDL interface per class, and data packs for Tier 0.
+**Status: Done** (pull request #6).
+
+**Delivers:** [ADR 0004](https://github.com/JaysenDraney/FireEscape/blob/main/docs/adr/0004-plugin-form-and-transport.md), which settles the plugin form: separate APKs for Tiers 1 to 3, each exposing a bound service with a versioned AIDL interface per class, and data packs for Tier 0.
 
 **Depends on:** nothing. M0.5 to M0.8 depend on it.
 
 **Acceptance criteria**
 
-- [ ] A spike shows a launcher binding to a service in a second APK on the TV emulator, calling it and surviving that APK's crash.
-- [ ] The ADR compares the options, records the choice and is approved by the owner.
-- [ ] The design proposal's section 6 and this page are updated to match.
+- [x] A spike shows a launcher binding to a service in a second APK on the TV emulator, calling it and surviving that APK's crash.
+- [x] The ADR compares the options, records the choice and is approved by the owner.
+- [x] The design proposal's section 6 and this page are updated to match.
 
 **Tests:** the spike's L4 test is kept and becomes the first test of M0.5.
 
@@ -495,13 +497,13 @@ Numbers that the design has not fixed yet, such as timeouts and limits, are mark
 - **Name:** FireEscape.
 - **License:** Apache-2.0 for the whole project, including the core, the SDK and the sample plugins. It includes a patent grant. It also permits closed-source forks, so the openness rules bind the spec and the default index, not forks.
 - **Do not copy code from GPL projects.** Apache-2.0 code cannot absorb GPL-3.0 code. Other launchers are references only.
+- **Plugin form and transport:** separate APKs for Tiers 1 to 3, one bound service per class with a versioned AIDL interface, found by a per-class intent action. Tier 0 stays declarative data packs. [ADR 0004](https://github.com/JaysenDraney/FireEscape/blob/main/docs/adr/0004-plugin-form-and-transport.md).
 - **Documentation:** Astro Starlight.
 
 ## Still open
 
 | Decision | Current leaning |
 | --- | --- |
-| Plugin form | Separate APKs for Tiers 1 to 3, data packs for Tier 0. |
 | Compatibility with existing wallpaper plugins | Undecided. Needs a read of that interface and the license of its sample project. |
 | Kids and profiles | Launcher-level first, documented as non-enforcing. |
 | Manual override length | Until the next schedule change. |

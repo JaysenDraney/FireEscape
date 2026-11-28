@@ -7,3 +7,4 @@ Each file records one decision: the context, the decision and its consequences. 
 | [0001](0001-use-kotlin.md) | Use Kotlin, not Java | Accepted |
 | [0002](0002-testing-layers.md) | Testing layers and Roborazzi for screenshots | Accepted |
 | [0003](0003-screenshot-review-ci.md) | Screenshot review in CI uses companion branches and Roborazzi diffs | Accepted |
+| [0004](0004-plugin-form-and-transport.md) | Plugin form and transport | Accepted |

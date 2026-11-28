@@ -25,5 +25,21 @@
                 android:name="fireescape.source"
                 android:value="https://github.com/JaysenDraney/FireEscape" />
         </service>
+        <service
+            android:name=".SpikeV2Service"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="org.fireescape.plugin.SPIKE" />
+            </intent-filter>
+            <meta-data
+                android:name="fireescape.api"
+                android:value="spike/2" />
+            <meta-data
+                android:name="fireescape.capabilities"
+                android:value="" />
+            <meta-data
+                android:name="fireescape.source"
+                android:value="https://github.com/JaysenDraney/FireEscape" />
+        </service>
     </application>
 </manifest>

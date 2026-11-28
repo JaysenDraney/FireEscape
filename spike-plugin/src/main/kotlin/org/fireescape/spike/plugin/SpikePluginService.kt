@@ -6,7 +6,7 @@ import android.os.IBinder
 import android.os.Process
 import org.fireescape.plugin.spike.ISpikePlugin
 
-class SpikePluginService : Service() {
+open class SpikePluginService : Service() {
 
     private val binder = object : ISpikePlugin.Stub() {
         override fun getPluginApiVersion(): Int = 1

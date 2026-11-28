@@ -23,8 +23,9 @@ class SpikeTransportTest {
     @Before
     fun bindToPlugin() {
         client = SpikePluginClient(context)
-        val found = client.discover()
-        assertEquals("exactly one spike plugin installed", 1, found.size)
+        // M0.5 adds a spike/2 alias service to test the host's compatibility gate.
+        val found = client.discover().filter { it.api == "spike/1" }
+        assertEquals("exactly one spike/1 plugin installed", 1, found.size)
         assertEquals("spike/1", found.single().api)
         assertTrue(client.bind(found.single().component))
         waitUntil(5_000) { client.plugin != null }
